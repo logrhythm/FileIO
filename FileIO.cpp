@@ -15,7 +15,6 @@ namespace FileIO {
     * @return Result<std::string> all the content of the file, and/or an error string 
     *         if something went wrong 
     */
-
 Result<std::string> ReadAsciiFileContent(const std::string& pathToFile) {
    std::ifstream in(pathToFile, std::ios::in);
    if (!in) {
@@ -28,7 +27,7 @@ Result<std::string> ReadAsciiFileContent(const std::string& pathToFile) {
    in.seekg(0, std::ios::end);
    auto end = in.tellg();
 
-   // Attempt to read it the fastest way
+   // Attempt to read it the fastest way possible
    if(-1 != end) {
       contents.resize(end);
       in.seekg(0, std::ios::beg);
@@ -37,8 +36,8 @@ Result<std::string> ReadAsciiFileContent(const std::string& pathToFile) {
       return Result<std::string>{contents};
    }
    
-   // Could not calculate with tellg. 
-   // Fallback is slower iterative approach
+   // Could not calculate with ifstream::tellg(). Is it a RAM file? 
+   // Fallback solution to slower iteratator approach
    contents.assign((std::istreambuf_iterator<char>(in)),  
                    (std::istreambuf_iterator<char>()  ) );
    return Result<std::string>{contents};

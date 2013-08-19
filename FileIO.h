@@ -18,7 +18,10 @@ namespace FileIO {
        * @param err error message to the client, default is empty which means successful operation
        */
       Result(T output, const std::string& err = {""}) 
-       : result(output), error(err){}      
+      : result(output), error(err){}      
+      
+      /** @return status whether or not the Result contains a failure*/
+      bool HasFailed() { return (!error.empty());}
    };
    
    Result<std::string> ReadAsciiFileContent(const std::string& pathToFile); 
