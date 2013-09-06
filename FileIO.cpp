@@ -35,11 +35,12 @@ Result<std::string> ReadAsciiFileContent(const std::string& pathToFile) {
       in.close();
       return Result<std::string>{contents};
    }
-   
+   //LOG(WARNING) << "Could not seek to end of " << pathToFile << " reverting to iterator";
    // Could not calculate with ifstream::tellg(). Is it a RAM file? 
    // Fallback solution to slower iteratator approach
    contents.assign((std::istreambuf_iterator<char>(in)),  
                    (std::istreambuf_iterator<char>()  ) );
+   in.close();
    return Result<std::string>{contents};
 }
 
