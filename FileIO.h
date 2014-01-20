@@ -26,5 +26,6 @@ namespace FileIO {
    
    Result<std::string> ReadAsciiFileContent(const std::string& pathToFile); 
    Result<bool> WriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
+   bool DoesFileExist(const std::string& pathToFile);
 }
 

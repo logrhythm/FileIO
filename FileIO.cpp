@@ -8,6 +8,11 @@
 #include "FileIO.h"
 #include <fstream>
 #include <g2log.hpp>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <time.h>
+#include <stdio.h>
+#include <stdlib.h>
 namespace FileIO {
    /**
     * Reads content of Ascii file
@@ -63,6 +68,15 @@ Result<bool> WriteAsciiFileContent(const std::string& pathToFile, const std::str
    out.close();
    return Result<bool>{true};
 }
-
+/**
+ * Use stat to determine the presence of a file
+ * @param pathToFile
+ * @return if the stat command succeeded (meaning that there is something at that filename)
+ */
+bool DoesFileExist(const std::string& pathToFile) {
+   struct stat fileInfo;
+   
+   return (stat(pathToFile.c_str(),&fileInfo) == 0);
+}
 
 }
