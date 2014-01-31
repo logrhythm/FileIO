@@ -7,7 +7,11 @@
 
 #pragma once
 #include <string>
+#include <fstream>
 
+#include <sys/fsuid.h>
+#include <unistd.h>
+#include <pwd.h>
 namespace FileIO {   
    template<typename T> struct Result {
       const T result;
@@ -26,6 +30,10 @@ namespace FileIO {
    
    Result<std::string> ReadAsciiFileContent(const std::string& pathToFile); 
    Result<bool> WriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
+   Result<bool> AppendWriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
+   Result<bool> WriteFileContentInternal(const std::string& pathToFile, const std::string& content, std::ios_base::openmode mode);
    bool DoesFileExist(const std::string& pathToFile);
+   struct passwd* GetDpiPasswd();
+   void SetDpiFileSystemAccess();
 }
 
