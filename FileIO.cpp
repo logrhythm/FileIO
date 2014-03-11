@@ -7,7 +7,9 @@
 
 #include "FileIO.h"
 #include <fstream>
-#include <g2log.hpp>
+/**
+ * We should NOT use any LOGGING in this file.
+ */
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
@@ -42,7 +44,6 @@ namespace FileIO {
          in.close();
          return Result<std::string>{contents};
       }
-      //LOG(WARNING) << "Could not seek to end of " << pathToFile << " reverting to iterator";
       // Could not calculate with ifstream::tellg(). Is it a RAM file? 
       // Fallback solution to slower iteratator approach
       contents.assign((std::istreambuf_iterator<char>(in)),
