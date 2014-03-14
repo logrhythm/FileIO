@@ -17,7 +17,7 @@
 #include <stdlib.h>
 namespace FileIO {
 
-/**
+      /**
     * Reads content of Ascii file
     * @param pathToFile to read
     * @return Result<std::string> all the content of the file, and/or an error string 
@@ -29,7 +29,8 @@ namespace FileIO {
          std::string error{"Cannot read-open file: "};
          error.append(pathToFile);
          return Result<std::string>{
-            {}, error};
+            {}, error
+         };
       }
 
       std::string contents;
@@ -72,7 +73,7 @@ namespace FileIO {
       return Result<bool>{true};
    }
 
-/**
+      /**
     * Write ascii content to file
     * @param pathToFile to write
     * @param content to write to file
@@ -84,7 +85,7 @@ namespace FileIO {
       return WriteFileContentInternal(pathToFile, content, std::ios::trunc);
    }
 
-/**
+      /**
     * Write ascii content to the end of a file
     * @param pathToFile to write
     * @param content to write to file
@@ -141,6 +142,18 @@ namespace FileIO {
 
       free(pwd);
 
+   }
+
+   Result<bool> RemoveFileAsRoot(const std::string& filename) {
+      
+      setfsuid(0);
+      setfsgid(0);
+      int rc = unlink(filename.c_str());
+      FileIO::SetDpiFileSystemAccess();
+      if (rc == -1) {
+         return Result<bool>{false,"Unable to unlink file"};
+      } 
+      return Result<bool>{true};
    }
 
 }
