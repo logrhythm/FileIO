@@ -2,6 +2,7 @@
  * File:   FileIO.cpp
  * Author: kjell/weberr13
  * 
+ * https://github.com/weberr13/FileIO
  * Created on August 15, 2013, 2:28 PM
  */
 
@@ -103,10 +104,24 @@ namespace FileIO {
     */
    bool DoesFileExist(const std::string& pathToFile) {
       struct stat fileInfo;
-
       return (stat(pathToFile.c_str(), &fileInfo) == 0);
    }
 
+   /**
+    * Use stat to determine the presence of a directory
+    * @param pathToFile
+    * @return if the stat command succeeded (meaning that there is a directory that directory name)
+    */
+   bool DoesDirectoryExist(const std::string& pathToDirectory) {
+      struct stat directoryInfo;
+      if(0 != stat(pathToDirectory.c_str(), &directoryInfo)) {
+         return false;
+      }
+      bool isDirectory = S_ISDIR(directoryInfo.st_mode);
+      return isDirectory;     
+   }
+   
+   
    struct passwd* GetUserFromPasswordFile(const std::string& username) {
       struct passwd* pwd = (struct passwd *) calloc(1, sizeof (struct passwd));
       if (pwd == NULL) {

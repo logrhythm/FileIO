@@ -2,6 +2,7 @@
  * File:   FileIO.h
  * Author: kjell/weberr13
  *
+ * https://github.com/weberr13/FileIO
  * Created on August 15, 2013, 2:28 PM
  */
 
@@ -36,6 +37,7 @@ namespace FileIO {
    Result<bool> RemoveFileAsRoot(const std::string& filename, const std::string& currentUsername);
    struct passwd* GetUserFromPasswordFile(const std::string& username);
    void SetUserFileSystemAccess(const std::string& username);
+   bool DoesDirectoryExist(const std::string& pathToDirectory);
 }
 
 
