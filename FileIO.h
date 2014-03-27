@@ -1,8 +1,6 @@
 /* 
  * File:   FileIO.h
  * Author: kjell/weberr13
- * 
- * https://github.com/weberr13/FileIO
  *
  * Created on August 15, 2013, 2:28 PM
  */
@@ -35,6 +33,7 @@ namespace FileIO {
    Result<bool> AppendWriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
    Result<bool> WriteFileContentInternal(const std::string& pathToFile, const std::string& content, std::ios_base::openmode mode);
    bool DoesFileExist(const std::string& pathToFile);
+   bool DoesDirectoryExist(const std::string& pathToDirectory);
    Result<bool> RemoveFileAsRoot(const std::string& filename);
    struct passwd* GetDpiPasswd();
    void SetDpiFileSystemAccess();
