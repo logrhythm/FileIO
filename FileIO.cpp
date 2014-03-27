@@ -1,7 +1,8 @@
 /* 
  * File:   FileIO.cpp
- * Author: kjell
+ * Author: kjell/weberr
  * 
+ * https://github.com/weberr13/FileIO
  * Created on August 15, 2013, 2:28 PM
  */
 
