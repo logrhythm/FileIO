@@ -1,7 +1,8 @@
 /* 
  * File:   FileIO.cpp
- * Author: kjell
+ * Author: kjell/weberr13
  * 
+ * https://github.com/weberr13/FileIO
  * Created on August 15, 2013, 2:28 PM
  */
 
@@ -113,7 +114,9 @@ namespace FileIO {
     */
    bool DoesDirectoryExist(const std::string& pathToDirectory) {
       struct stat directoryInfo;
-      stat(pathToDirectory.c_str(), &directoryInfo);
+      if(0 != stat(pathToDirectory.c_str(), &directoryInfo)) {
+         return false;
+      }
       bool isDirectory = S_ISDIR(directoryInfo.st_mode);
       return isDirectory;     
    }
