@@ -8,6 +8,7 @@
 #pragma once
 #include <string>
 #include <fstream>
+#include <mutex>
 
 #include <sys/fsuid.h>
 #include <unistd.h>
@@ -37,5 +38,7 @@ namespace FileIO {
    Result<bool> RemoveFileAsRoot(const std::string& filename);
    struct passwd* GetDpiPasswd();
    void SetDpiFileSystemAccess();
+   
+   static std::mutex mPermissionsMutex;
 }
 

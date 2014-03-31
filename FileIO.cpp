@@ -15,9 +15,10 @@
 #include <time.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 namespace FileIO {
 
-      /**
+   /**
     * Reads content of Ascii file
     * @param pathToFile to read
     * @return Result<std::string> all the content of the file, and/or an error string 
@@ -73,7 +74,7 @@ namespace FileIO {
       return Result<bool>{true};
    }
 
-      /**
+   /**
     * Write ascii content to file
     * @param pathToFile to write
     * @param content to write to file
@@ -85,7 +86,7 @@ namespace FileIO {
       return WriteFileContentInternal(pathToFile, content, std::ios::trunc);
    }
 
-      /**
+   /**
     * Write ascii content to the end of a file
     * @param pathToFile to write
     * @param content to write to file
@@ -108,19 +109,32 @@ namespace FileIO {
    }
 
    Result<bool> ChangeFileOrDirOwnershipToDpi(const std::string& path) {
+
+      std::lock_guard<std::mutex> lock(mPermissionsMutex);
+      auto previuousuid = setfsuid(-1);
+      auto previuousgid = setfsgid(-1);
+      setfsuid(0);
+      setfsgid(0);
       struct passwd* pwd = GetDpiPasswd();
-      
-      auto returnVal = chown(path.c_str(),pwd->pw_uid, pwd->pw_gid);
+      auto returnVal = chown(path.c_str(), pwd->pw_uid, pwd->pw_gid);
+      free(pwd);
+
       if (returnVal < 0) {
          std::string error{"Cannot chown dir/file: "};
          error.append(path);
          error.append(" error number: ");
          error.append(std::to_string(errno));
+         error.append(" current fs permissions are for uid: ");
+         error.append(std::to_string(setfsuid(-1)));
+         setfsuid(previuousuid);
+         setfsgid(previuousgid);
          return Result<bool>{false, error};
       }
+      setfsuid(previuousuid);
+      setfsgid(previuousgid);
       return Result<bool>{true};
    }
-   
+
    struct passwd* GetDpiPasswd() {
       // Get the uid for dpi user
       static const std::string username("dpi");
@@ -159,14 +173,19 @@ namespace FileIO {
    }
 
    Result<bool> RemoveFileAsRoot(const std::string& filename) {
-      
+
+      std::lock_guard<std::mutex> lock(mPermissionsMutex);
+      auto previuousuid = setfsuid(-1);
+      auto previuousgid = setfsgid(-1);
       setfsuid(0);
       setfsgid(0);
       int rc = unlink(filename.c_str());
-      FileIO::SetDpiFileSystemAccess();
+      setfsuid(previuousuid);
+      setfsgid(previuousgid);
+
       if (rc == -1) {
-         return Result<bool>{false,"Unable to unlink file"};
-      } 
+         return Result<bool>{false, "Unable to unlink file"};
+      }
       return Result<bool>{true};
    }
 
