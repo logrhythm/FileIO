@@ -107,6 +107,20 @@ namespace FileIO {
       return (stat(pathToFile.c_str(), &fileInfo) == 0);
    }
 
+   Result<bool> ChangeFileOrDirOwnershipToDpi(const std::string& path) {
+      struct passwd* pwd = GetDpiPasswd();
+      
+      auto returnVal = chown(path.c_str(),pwd->pw_uid, pwd->pw_gid);
+      if (returnVal < 0) {
+         std::string error{"Cannot chown dir/file: "};
+         error.append(path);
+         error.append(" error number: ");
+         error.append(std::to_string(errno));
+         return Result<bool>{false, error};
+      }
+      return Result<bool>{true};
+   }
+   
    struct passwd* GetDpiPasswd() {
       // Get the uid for dpi user
       static const std::string username("dpi");

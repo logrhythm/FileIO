@@ -32,6 +32,7 @@ namespace FileIO {
    Result<bool> WriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
    Result<bool> AppendWriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
    Result<bool> WriteFileContentInternal(const std::string& pathToFile, const std::string& content, std::ios_base::openmode mode);
+   Result<bool> ChangeFileOrDirOwnershipToDpi(const std::string& path);
    bool DoesFileExist(const std::string& pathToFile);
    Result<bool> RemoveFileAsRoot(const std::string& filename);
    struct passwd* GetDpiPasswd();
