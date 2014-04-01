@@ -9,6 +9,7 @@
 #pragma once
 #include <string>
 #include <fstream>
+#include <mutex>
 
 #include <sys/fsuid.h>
 #include <unistd.h>
@@ -33,11 +34,14 @@ namespace FileIO {
    Result<bool> WriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
    Result<bool> AppendWriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
    Result<bool> WriteFileContentInternal(const std::string& pathToFile, const std::string& content, std::ios_base::openmode mode);
+   Result<bool> ChangeFileOrDirOwnershipToUser(const std::string& path, const std::string& username);
    bool DoesFileExist(const std::string& pathToFile);
-   Result<bool> RemoveFileAsRoot(const std::string& filename, const std::string& currentUsername);
+   Result<bool> RemoveFileAsRoot(const std::string& filename);
    struct passwd* GetUserFromPasswordFile(const std::string& username);
    void SetUserFileSystemAccess(const std::string& username);
    bool DoesDirectoryExist(const std::string& pathToDirectory);
+
+   static std::mutex mPermissionsMutex;
 }
 
 
