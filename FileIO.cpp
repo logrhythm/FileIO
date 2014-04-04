@@ -18,6 +18,7 @@
 #include <stdlib.h>
 
 namespace FileIO {
+   std::mutex mPermissionsMutex;
 
    /**
     * Reads content of Ascii file

@@ -40,8 +40,7 @@ namespace FileIO {
    struct passwd* GetUserFromPasswordFile(const std::string& username);
    void SetUserFileSystemAccess(const std::string& username);
    bool DoesDirectoryExist(const std::string& pathToDirectory);
-
-   static std::mutex mPermissionsMutex;
+   
 }
 
 
