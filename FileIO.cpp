@@ -246,35 +246,35 @@ namespace FileIO {
     * @return pair of name of entry and type. If end is reached "TypeFound::End" is returned.
     *
     */
-   DirectoryReader::Found DirectoryReader::Next() {
+   DirectoryReader::Entry DirectoryReader::Next() {
       static const std::string Ignore1{"."};
       static const std::string Ignore2{".."};
       
-      Found entry;
+      Entry entry;
       while (true) {
          auto ignoredError = readdir64_r(mDirectory, &mEntry, &mResult); // readdir_r is reentrant 
          if (nullptr == mResult) {
-            entry = std::make_pair(TypeFound::End, "");;
+            entry = std::make_pair(FileType::End, "");;
             break;
          }
 
-         if (static_cast<unsigned char> (TypeFound::File) == mEntry.d_type) {
-            entry = std::make_pair(TypeFound::File, mEntry.d_name);
+         if (static_cast<unsigned char> (FileType::File) == mEntry.d_type) {
+            entry = std::make_pair(FileType::File, mEntry.d_name);
             break;
          }
 
 
-         if (static_cast<unsigned char> (TypeFound::Directory) == mEntry.d_type) {
+         if (static_cast<unsigned char> (FileType::Directory) == mEntry.d_type) {
             std::string name{mEntry.d_name};
             if ((Ignore1 == name) || (Ignore2 == name)) {
                continue;
             }
-            entry = std::make_pair(TypeFound::Directory, std::move(name));
+            entry = std::make_pair(FileType::Directory, std::move(name));
             break;
          }
          
          // Default case. Unless continue was called it will always exit here
-         entry = std::make_pair(TypeFound::Unknown, "");
+         entry = std::make_pair(FileType::Unknown, "");
          break;
       }
       return entry;

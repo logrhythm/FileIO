@@ -41,8 +41,6 @@ namespace FileIO {
    void SetUserFileSystemAccess(const std::string& username);
    bool DoesDirectoryExist(const std::string& pathToDirectory);
 
-   
-   struct DirectoryReader {
       /** TypeFound could be expanded. Ref /usr/include/dirent.h 
        * http://stackoverflow.com/questions/13132667/what-does-dt-wht-means-in-usr-include-dirent-h
        *  Anything that is not File or Directory will now be classified as Unknown
@@ -50,13 +48,17 @@ namespace FileIO {
        * The values correspond to the enum values in /usr/include/bits/dirent.h except
        * for End which is set to one value higher than the maximum
       **/ 
-      enum class TypeFound : unsigned char {Unknown=DT_UNKNOWN, Directory=DT_DIR, File=DT_REG, End=DT_WHT+1}; 
-      typedef std::pair<TypeFound, std::string> Found;
+   enum class FileType : unsigned char {Unknown=DT_UNKNOWN, Directory=DT_DIR, File=DT_REG, End=DT_WHT+1}; 
+   
+   struct DirectoryReader {
+
+      //enum class TypeFound : unsigned char {Unknown=DT_UNKNOWN, Directory=DT_DIR, File=DT_REG, End=DT_WHT+1}; 
+      typedef std::pair<FileType, std::string> Entry;
       explicit DirectoryReader(const std::string& pathToDirectory);
       ~DirectoryReader();         
       
       Result<bool> Valid() {return mValid;}
-      DirectoryReader::Found Next();
+      DirectoryReader::Entry Next();
       void Reset();
       
    private:
