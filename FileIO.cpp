@@ -234,6 +234,7 @@ namespace FileIO {
    DirectoryReader::~DirectoryReader() {
       closedir(mDirectory);
    }
+
    /**
     * Finds the next entry in the directory or returns it. 
     * The type of the entry is returned. The type corresponds to dirent.h d_type
@@ -249,33 +250,29 @@ namespace FileIO {
    DirectoryReader::Entry DirectoryReader::Next() {
       static const std::string Ignore1{"."};
       static const std::string Ignore2{".."};
-      
-      Entry entry;
-      while (true) {
+
+      Entry entry = std::make_pair(FileType::Unknown, "");
+      bool found = false;
+      while (!found && (entry.first != FileType::End)) {
          auto ignoredError = readdir64_r(mDirectory, &mEntry, &mResult); // readdir_r is reentrant 
+
+         found = true; // abort immediately unless we hit "." or ".."
+
          if (nullptr == mResult) {
-            entry = std::make_pair(FileType::End, "");;
-            break;
-         }
-
-         if (static_cast<unsigned char> (FileType::File) == mEntry.d_type) {
-            entry = std::make_pair(FileType::File, mEntry.d_name);
-            break;
-         }
-
-
-         if (static_cast<unsigned char> (FileType::Directory) == mEntry.d_type) {
+            entry = std::make_pair(FileType::End, "");
+         } else if (static_cast<unsigned char> (FileType::Directory) == mEntry.d_type) {
             std::string name{mEntry.d_name};
             if ((Ignore1 == name) || (Ignore2 == name)) {
-               continue;
+               found = false;
+            } else {
+               entry = std::make_pair(FileType::Directory, std::move(name));
             }
-            entry = std::make_pair(FileType::Directory, std::move(name));
-            break;
+         } else if (static_cast<unsigned char> (FileType::File) == mEntry.d_type) {
+            entry = std::make_pair(FileType::File, mEntry.d_name);
+         } else {
+            // Default case. Unless continue was called it will always exit here
+            entry = std::make_pair(FileType::Unknown, "");
          }
-         
-         // Default case. Unless continue was called it will always exit here
-         entry = std::make_pair(FileType::Unknown, "");
-         break;
       }
       return entry;
    }
