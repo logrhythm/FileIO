@@ -6,18 +6,28 @@
  * Created on August 15, 2013, 2:28 PM
  */
 
-#include "FileIO.h"
-#include <fstream>
+
 /**
  * We should NOT use any LOGGING in this file.
  */
+
+
+#include "FileIO.h"
+#include <mutex>
+#include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <time.h>
-#include <stdio.h>
-#include <stdlib.h>
-
+#include <ctime>
+#include <cstdio>
+#include <cstdlib>
+#include <cerrno>
+#include <cstring>
+#include <czmq.h> // zctx_interrupted
+#include <cerrno>
+#include <iostream>
+#include "DiskUsage.h" 
 namespace FileIO {
+   std::mutex mPermissionsMutex;
 
    /**
     * Reads content of Ascii file
@@ -115,14 +125,94 @@ namespace FileIO {
     */
    bool DoesDirectoryExist(const std::string& pathToDirectory) {
       struct stat directoryInfo;
-      if(0 != stat(pathToDirectory.c_str(), &directoryInfo)) {
+      if (0 != stat(pathToDirectory.c_str(), &directoryInfo)) {
          return false;
       }
       bool isDirectory = S_ISDIR(directoryInfo.st_mode);
-      return isDirectory;     
+      return isDirectory;
    }
-   
-   
+
+      /**
+    * Iterate through the directory. Remove any file found,  save any found directory
+    * Any attempt to delete files from "/"or "/root" will be ignored.
+    * 
+    * 
+    * @param location to delete files from
+    * @param return by reference number of files deleted
+    * @param return by reference any found directory
+    * @return whether or not all the operations were successful
+    */
+   Result<bool> CleanDirectoryOfFileContents(const std::string& location
+           , size_t& filesRemoved, std::vector<std::string>& foundDirectories) {
+      if (("/" == location) || ("/root" == location) || ("/root/" == location)) {
+         return Result<bool>{false,
+            {"Not allowed to remove directory: " + location}};
+      }
+
+      if (location.empty() || !FileIO::DoesDirectoryExist(location)) {
+         return Result<bool>{false,
+            {"Directory does not exist. False location was: " + location}};
+      }
+
+      FileIO::DirectoryReader reader(location);
+      if (reader.Valid().HasFailed()) {
+         return Result<bool>{false,
+            {"Failed to read directory: " + location + ". Error: " + reader.Valid().error}};
+         ;
+      }
+
+      FileIO::DirectoryReader::Entry entry;
+      bool success = true;
+      filesRemoved = 0;
+      do {
+         entry = reader.Next();
+         if (FileIO::FileType::Directory == entry.first) {
+            std::string dirPath{location};
+            if ('/' != location.back()) {
+               dirPath.append("/");
+            }
+            dirPath.append(entry.second);
+            foundDirectories.push_back(dirPath);
+         } else if (FileIO::FileType::File == entry.first) {
+            std::string pathToFile{location + "/" + entry.second};
+            bool removedFile = (0 == unlink(pathToFile.c_str()));
+            if (removedFile) {
+               filesRemoved++;
+            } else {
+               success = false;
+            }
+         }
+         // FileIO::FileSystem::Unknown is ignored
+      } while (!zctx_interrupted && entry.first != FileIO::FileType::End);
+
+      return Result<bool>{true};
+   }
+
+      /**
+    * Remove directories at the given paths
+    * @return whether or not all the operations were successful
+    */
+   Result<bool> RemoveEmptyDirectories(const std::vector<std::string>& fullPathDirectories) {
+      std::ostringstream error;
+      error << "Failed to remove given directories : ";
+      bool success = true;
+      for (const auto& directory : fullPathDirectories) {
+         if (FileIO::DoesDirectoryExist(directory)) { // invalids are ignored. 
+            int removed = rmdir(directory.c_str());
+            if (0 != removed) {
+               success = false;
+               error << "\n" << directory << error << ", error: " << std::strerror(errno);
+            }
+         }
+      }
+
+      if (!success) {
+         return Result<bool>{false, error.str()};
+      }
+
+      return Result<bool>{true};
+   }
+
    Result<bool> ChangeFileOrDirOwnershipToUser(const std::string& path, const std::string& username) {
 
       std::lock_guard<std::mutex> lock(mPermissionsMutex);
@@ -202,4 +292,83 @@ namespace FileIO {
       return Result<bool>{true};
    }
 
-}
+
+   /**
+    * Helper lambda to instantiate the const Result<bool> AFTER
+    * the opendir call.
+    */
+   namespace {
+      /// @return the success of the opendir operation
+      auto DirectoryInit = [](DIR** directory, const std::string pathToDirectory) -> Result<bool> {
+         *directory = opendir(pathToDirectory.c_str());
+         std::string error{""};
+         bool success = true;
+
+         if (nullptr == *directory) {
+            std::string error{std::strerror(errno)};
+            return Result<bool>{false, error};
+         }
+         return Result<bool>(true);
+      };
+   } // anonymous helper
+
+   DirectoryReader::DirectoryReader(const std::string& pathToDirectory)
+   : mDirectory {
+      nullptr
+   }
+   , mValid{DirectoryInit(&mDirectory, pathToDirectory)}
+   {
+   }
+
+   DirectoryReader::~DirectoryReader() {
+      closedir(mDirectory);
+   }
+
+   /**
+    * Finds the next entry in the directory or returns it. 
+    * The type of the entry is returned. The type corresponds to dirent.h d_type
+    * 
+    * The only filesystem types supported are file and directory, all other will be classified as 
+    * TypeFound::Unknown
+    * 
+    * The directories "." and ".." are skipped
+    * 
+    * @return pair of name of entry and type. If end is reached "TypeFound::End" is returned.
+    *
+    */
+   DirectoryReader::Entry DirectoryReader::Next() {
+      static const std::string Ignore1{"."};
+      static const std::string Ignore2{".."};
+
+      Entry entry = std::make_pair(FileType::Unknown, "");
+      bool found = false;
+      while (!found && (entry.first != FileType::End)) {
+         auto ignoredError = readdir64_r(mDirectory, &mEntry, &mResult); // readdir_r is reentrant 
+
+         found = true; // abort immediately unless we hit "." or ".."
+
+         if (nullptr == mResult) {
+            entry = std::make_pair(FileType::End, "");
+         } else if (static_cast<unsigned char> (FileType::Directory) == mEntry.d_type) {
+            std::string name{mEntry.d_name};
+            if ((Ignore1 == name) || (Ignore2 == name)) {
+               found = false;
+            } else {
+               entry = std::make_pair(FileType::Directory, std::move(name));
+            }
+         } else if (static_cast<unsigned char> (FileType::File) == mEntry.d_type) {
+            entry = std::make_pair(FileType::File, mEntry.d_name);
+         } else {
+            // Default case. Unless continue was called it will always exit here
+            entry = std::make_pair(FileType::Unknown, "");
+         }
+      }
+      return entry;
+   }
+
+   /** Resets the position of the directory stream to the beginning of the directory */
+   void DirectoryReader::Reset() {
+      rewinddir(mDirectory);
+   }
+
+} // namespace FileIO

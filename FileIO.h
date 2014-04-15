@@ -8,41 +8,78 @@
 
 #pragma once
 #include <string>
+#include <utility>
+#include <vector>
 #include <fstream>
-#include <mutex>
-
+#include <dirent.h>
 #include <sys/fsuid.h>
 #include <unistd.h>
 #include <pwd.h>
-namespace FileIO {   
+
+#include "include/global.h"
+
+namespace FileIO {
+
    template<typename T> struct Result {
       const T result;
       const std::string error;
+
       /**
        * Result of a FileIO operation. 
        * @param output whatever the expected output would be
        * @param err error message to the client, default is empty which means successful operation
        */
-      Result(T output, const std::string& err = {""}) 
-      : result(output), error(err){}      
-      
+      Result(T output, const std::string& err = {""})
+      : result(output), error(err) {
+      }
+
       /** @return status whether or not the Result contains a failure*/
-      bool HasFailed() { return (!error.empty());}
+      bool HasFailed() {
+         return (!error.empty());
+      }
    };
-   
-   Result<std::string> ReadAsciiFileContent(const std::string& pathToFile); 
+
+   Result<std::string> ReadAsciiFileContent(const std::string& pathToFile);
    Result<bool> WriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
    Result<bool> AppendWriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
    Result<bool> WriteFileContentInternal(const std::string& pathToFile, const std::string& content, std::ios_base::openmode mode);
    Result<bool> ChangeFileOrDirOwnershipToUser(const std::string& path, const std::string& username);
    bool DoesFileExist(const std::string& pathToFile);
+   bool DoesDirectoryExist(const std::string& pathToDirectory);
+
+   Result<bool> CleanDirectoryOfFileContents(const std::string& location, size_t& filesRemoved, std::vector<std::string>& foundDirectories);
+   Result<bool> RemoveEmptyDirectories(const std::vector<std::string>& fullPathDirectories);
+
    Result<bool> RemoveFileAsRoot(const std::string& filename);
    struct passwd* GetUserFromPasswordFile(const std::string& username);
    void SetUserFileSystemAccess(const std::string& username);
-   bool DoesDirectoryExist(const std::string& pathToDirectory);
 
-   static std::mutex mPermissionsMutex;
+   /** TypeFound could be expanded. Ref /usr/include/dirent.h 
+    * http://stackoverflow.com/questions/13132667/what-does-dt-wht-means-in-usr-include-dirent-h
+    *  Anything that is not File or Directory will now be classified as Unknown
+    * including link, device, unknown, pipe or fifo, socket and "linux whiteout" 
+    * The values correspond to the enum values in /usr/include/bits/dirent.h except
+    * for End which is set to one value higher than the maximum
+    **/
+   enum class FileType : unsigned char {
+      Unknown = DT_UNKNOWN, Directory = DT_DIR, File = DT_REG, End = DT_WHT + 1
+   };
+
+   struct DirectoryReader {
+      typedef std::pair<FileType, std::string> Entry;
+      explicit DirectoryReader(const std::string& pathToDirectory);
+      ~DirectoryReader();
+
+      Result<bool> Valid() {
+         return mValid;
+      }
+      DirectoryReader::Entry Next();
+      void Reset();
+
+   private:
+      DIR* mDirectory;
+      struct dirent64 mEntry;
+      struct dirent64* mResult;
+      Result<bool> mValid;
+   };   
 }
-
-
-
