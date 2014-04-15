@@ -9,10 +9,7 @@
 #pragma once
 #include <string>
 #include <utility>
-<<<<<<< HEAD
 #include <vector>
-=======
->>>>>>> 79a9595d2d8ee34ab943349f72d55d0066e656d4
 #include <fstream>
 #include <dirent.h>
 #include <sys/fsuid.h>
@@ -57,18 +54,6 @@ namespace FileIO {
    struct passwd* GetUserFromPasswordFile(const std::string& username);
    void SetUserFileSystemAccess(const std::string& username);
 
-<<<<<<< HEAD
-   /** TypeFound could be expanded. Ref /usr/include/dirent.h 
-    * http://stackoverflow.com/questions/13132667/what-does-dt-wht-means-in-usr-include-dirent-h
-    *  Anything that is not File or Directory will now be classified as Unknown
-    * including link, device, unknown, pipe or fifo, socket and "linux whiteout" 
-    * The values correspond to the enum values in /usr/include/bits/dirent.h except
-    * for End which is set to one value higher than the maximum
-    **/
-   enum class FileType : unsigned char {
-      Unknown = DT_UNKNOWN, Directory = DT_DIR, File = DT_REG, End = DT_WHT + 1
-   };
-=======
       /** TypeFound could be expanded. Ref /usr/include/dirent.h 
        * http://stackoverflow.com/questions/13132667/what-does-dt-wht-means-in-usr-include-dirent-h
        *  Anything that is not File or Directory will now be classified as Unknown
@@ -77,27 +62,6 @@ namespace FileIO {
        * for End which is set to one value higher than the maximum
       **/ 
    enum class FileType : unsigned char {Unknown=DT_UNKNOWN, Directory=DT_DIR, File=DT_REG, End=DT_WHT+1}; 
-   
-   struct DirectoryReader {
-
-      //enum class TypeFound : unsigned char {Unknown=DT_UNKNOWN, Directory=DT_DIR, File=DT_REG, End=DT_WHT+1}; 
-      typedef std::pair<FileType, std::string> Entry;
-      explicit DirectoryReader(const std::string& pathToDirectory);
-      ~DirectoryReader();         
-      
-      Result<bool> Valid() {return mValid;}
-      DirectoryReader::Entry Next();
-      void Reset();
-      
-   private:
-      DIR* mDirectory;
-      struct dirent64 mEntry;
-      struct dirent64* mResult;
-      Result<bool> mValid;
-   };   
-}
->>>>>>> 79a9595d2d8ee34ab943349f72d55d0066e656d4
-
    struct DirectoryReader {
       typedef std::pair<FileType, std::string> Entry;
       explicit DirectoryReader(const std::string& pathToDirectory);
