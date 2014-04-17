@@ -159,8 +159,9 @@ namespace FileIO {
       }
 
       FileIO::DirectoryReader::Entry entry;
-      bool success = true;
+      size_t failures{0};
       filesRemoved = 0;
+      std::string lastError;
       do {
          entry = reader.Next();
          if (FileIO::FileType::Directory == entry.first) {
@@ -176,13 +177,19 @@ namespace FileIO {
             if (removedFile) {
                filesRemoved++;
             } else {
-               success = false;
+               ++failures;
+               lastError = {"Last Error for file: " + pathToFile + ", errno: " };
+               lastError.append(std::strerror(errno));
             }
          }
          // FileIO::FileSystem::Unknown is ignored
       } while (!zctx_interrupted && entry.first != FileIO::FileType::End);
 
-      return Result<bool>{true};
+      std::string report;
+      if (failures > 0) {
+         report = {"#" + std::to_string(failures) + " number of failed removals. " + lastError};
+      }
+      return Result<bool>{(0 == failures), report};
    }
    
    
