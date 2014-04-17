@@ -46,10 +46,10 @@ namespace FileIO {
    Result<bool> ChangeFileOrDirOwnershipToUser(const std::string& path, const std::string& username);
    bool DoesFileExist(const std::string& pathToFile);
    bool DoesDirectoryExist(const std::string& pathToDirectory);
-
+   
    Result<bool> CleanDirectoryOfFileContents(const std::string& location, size_t& filesRemoved, std::vector<std::string>& foundDirectories);
    Result<bool> RemoveEmptyDirectories(const std::vector<std::string>& fullPathDirectories);
-
+   
    Result<bool> RemoveFileAsRoot(const std::string& filename);
    struct passwd* GetUserFromPasswordFile(const std::string& username);
    void SetUserFileSystemAccess(const std::string& username);

@@ -8,9 +8,6 @@
 
 
 
-/**
- * We should NOT use any LOGGING in this file.
- */
 #include "FileIO.h"
 #include <mutex>
 #include <sstream>
@@ -130,7 +127,9 @@ namespace FileIO {
       return isDirectory;
    }
 
-      /**
+   
+   
+/**
     * Iterate through the directory. Remove any file found,  save any found directory
     * Any attempt to delete files from "/"or "/root" will be ignored.
     * 
@@ -143,25 +142,22 @@ namespace FileIO {
    Result<bool> CleanDirectoryOfFileContents(const std::string& location
            , size_t& filesRemoved, std::vector<std::string>& foundDirectories) {
       if (("/" == location) || ("/root" == location) || ("/root/" == location)) {
-         return Result<bool>{false,
-            {"Not allowed to remove directory: " + location}};
+         return Result<bool>{false, {"Not allowed to remove directory: " + location}};
       }
 
       if (location.empty() || !FileIO::DoesDirectoryExist(location)) {
-         return Result<bool>{false,
-            {"Directory does not exist. False location was: " + location}};
+         return Result<bool>{false, {"Directory does not exist. False location was: " + location}};
       }
 
       FileIO::DirectoryReader reader(location);
       if (reader.Valid().HasFailed()) {
-         return Result<bool>{false,
-            {"Failed to read directory: " + location + ". Error: " + reader.Valid().error}};
-         ;
+         return Result<bool>{false, {"Failed to read directory: " + location + ". Error: " + reader.Valid().error}};;
       }
 
       FileIO::DirectoryReader::Entry entry;
-      bool success = true;
+      size_t failures{0};
       filesRemoved = 0;
+      std::string lastError;
       do {
          entry = reader.Next();
          if (FileIO::FileType::Directory == entry.first) {
@@ -177,16 +173,25 @@ namespace FileIO {
             if (removedFile) {
                filesRemoved++;
             } else {
-               success = false;
+               ++failures;
+               lastError = {"Last Error for file: " + pathToFile + ", errno: " };
+               lastError.append(std::strerror(errno));
             }
          }
          // FileIO::FileSystem::Unknown is ignored
       } while (!zctx_interrupted && entry.first != FileIO::FileType::End);
 
-      return Result<bool>{true};
+      std::string report;
+      if (failures > 0) {
+         report = {"#" + std::to_string(failures) + " number of failed removals. " + lastError};
+      }
+      return Result<bool>{(0 == failures), report};
    }
+   
+   
+   
 
-      /**
+/**
     * Remove directories at the given paths
     * @return whether or not all the operations were successful
     */
@@ -199,18 +204,19 @@ namespace FileIO {
             int removed = rmdir(directory.c_str());
             if (0 != removed) {
                success = false;
-               error << "\n" << directory << error << ", error: " << std::strerror(errno);
+               error << "\n" << directory << error << ", error: " << std::strerror(errno);               
             }
          }
       }
-
+      
       if (!success) {
          return Result<bool>{false, error.str()};
       }
-
+      
       return Result<bool>{true};
    }
-
+   
+   
    Result<bool> ChangeFileOrDirOwnershipToUser(const std::string& path, const std::string& username) {
 
       std::lock_guard<std::mutex> lock(mPermissionsMutex);
@@ -298,8 +304,8 @@ namespace FileIO {
       /// @return the success of the opendir operation
       auto DirectoryInit = [](DIR** directory, const std::string pathToDirectory) -> Result<bool> {
          *directory = opendir(pathToDirectory.c_str());
-         std::string error{""};
-         bool success = true;
+          std::string error{""};
+          bool success = true;
 
          if (nullptr == *directory) {
             std::string error{std::strerror(errno)};
