@@ -168,7 +168,7 @@ namespace FileIO {
             dirPath.append(entry.second);
             foundDirectories.push_back(dirPath);
          } else if (FileIO::FileType::File == entry.first) {
-            std::string pathToFile{location + "/" + entry.second};
+            const std::string pathToFile{location + "/" + entry.second};
             bool removedFile = (0 == unlink(pathToFile.c_str()));
             if (removedFile) {
                filesRemoved++;
