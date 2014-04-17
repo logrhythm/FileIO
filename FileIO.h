@@ -9,6 +9,7 @@
 #pragma once
 #include <string>
 #include <utility>
+#include <vector>
 #include <fstream>
 #include <dirent.h>
 #include <sys/fsuid.h>
@@ -36,10 +37,14 @@ namespace FileIO {
    Result<bool> WriteFileContentInternal(const std::string& pathToFile, const std::string& content, std::ios_base::openmode mode);
    Result<bool> ChangeFileOrDirOwnershipToUser(const std::string& path, const std::string& username);
    bool DoesFileExist(const std::string& pathToFile);
+   bool DoesDirectoryExist(const std::string& pathToDirectory);
+   
+   Result<bool> CleanDirectoryOfFileContents(const std::string& location, size_t& filesRemoved, std::vector<std::string>& foundDirectories);
+   Result<bool> RemoveEmptyDirectories(const std::vector<std::string>& fullPathDirectories);
+   
    Result<bool> RemoveFileAsRoot(const std::string& filename);
    struct passwd* GetUserFromPasswordFile(const std::string& username);
    void SetUserFileSystemAccess(const std::string& username);
-   bool DoesDirectoryExist(const std::string& pathToDirectory);
 
       /** TypeFound could be expanded. Ref /usr/include/dirent.h 
        * http://stackoverflow.com/questions/13132667/what-does-dt-wht-means-in-usr-include-dirent-h
@@ -51,8 +56,6 @@ namespace FileIO {
    enum class FileType : unsigned char {Unknown=DT_UNKNOWN, Directory=DT_DIR, File=DT_REG, End=DT_WHT+1}; 
    
    struct DirectoryReader {
-
-      //enum class TypeFound : unsigned char {Unknown=DT_UNKNOWN, Directory=DT_DIR, File=DT_REG, End=DT_WHT+1}; 
       typedef std::pair<FileType, std::string> Entry;
       explicit DirectoryReader(const std::string& pathToDirectory);
       ~DirectoryReader();         
