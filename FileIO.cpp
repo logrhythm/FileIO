@@ -7,10 +7,6 @@
  */
 
 
-/**
- * We should NOT use any LOGGING in this file.
- */
-
 
 #include "FileIO.h"
 #include <mutex>
@@ -23,7 +19,6 @@
 #include <cerrno>
 #include <cstring>
 #include <czmq.h> // zctx_interrupted
-#include <cerrno>
 
 namespace FileIO {
    std::mutex mPermissionsMutex;
@@ -125,12 +120,13 @@ namespace FileIO {
     */
    bool DoesDirectoryExist(const std::string& pathToDirectory) {
       struct stat directoryInfo;
-      if(0 != stat(pathToDirectory.c_str(), &directoryInfo)) {
+      if (0 != stat(pathToDirectory.c_str(), &directoryInfo)) {
          return false;
       }
       bool isDirectory = S_ISDIR(directoryInfo.st_mode);
-      return isDirectory;     
+      return isDirectory;
    }
+
    
    
 /**
@@ -172,7 +168,7 @@ namespace FileIO {
             dirPath.append(entry.second);
             foundDirectories.push_back(dirPath);
          } else if (FileIO::FileType::File == entry.first) {
-            std::string pathToFile{location + "/" + entry.second};
+            const std::string pathToFile{location + "/" + entry.second};
             bool removedFile = (0 == unlink(pathToFile.c_str()));
             if (removedFile) {
                filesRemoved++;
@@ -300,7 +296,6 @@ namespace FileIO {
       return Result<bool>{true};
    }
 
-   
    /**
     * Helper lambda to instantiate the const Result<bool> AFTER
     * the opendir call.
@@ -312,18 +307,20 @@ namespace FileIO {
           std::string error{""};
           bool success = true;
 
-          if (nullptr == *directory) {
-             std::string error {std::strerror(errno)};
-             return Result<bool>{false, error};
+         if (nullptr == *directory) {
+            std::string error{std::strerror(errno)};
+            return Result<bool>{false, error};
          }
-          return Result<bool>(true);
-      }; 
+         return Result<bool>(true);
+      };
    } // anonymous helper
-   DirectoryReader::DirectoryReader(const std::string& pathToDirectory) 
-   :  mDirectory{nullptr}
-   ,  mValid{DirectoryInit(&mDirectory, pathToDirectory)} {
-   }
+
    
+   DirectoryReader::DirectoryReader(const std::string& pathToDirectory)
+   : mDirectory {nullptr }
+   , mValid{DirectoryInit(&mDirectory, pathToDirectory)}
+   {}
+
    DirectoryReader::~DirectoryReader() {
       closedir(mDirectory);
    }
@@ -369,12 +366,9 @@ namespace FileIO {
       }
       return entry;
    }
-        
-    
-    /** Resets the position of the directory stream to the beginning of the directory */
-    void DirectoryReader::Reset() {
-       rewinddir(mDirectory);
-    }
-    
-   
+   /** Resets the position of the directory stream to the beginning of the directory */
+   void DirectoryReader::Reset() {
+      rewinddir(mDirectory);
+   }
 } // namespace FileIO
+
