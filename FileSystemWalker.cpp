@@ -63,8 +63,7 @@ bool FileSystemWalker::IsValid() const {
  */
 Result<int> FileSystemWalker::Action() {
    if (!IsValid()) {
-      return Result<int>{-1,
-         {"Invalid Path: " + mStartPath}};
+      return Result<int>{-1, {"Invalid Path: " + mStartPath}};
    }
    char* rawpath = const_cast<char*> (mStartPath.c_str());
    char* ftsRawPath[] = {rawpath, nullptr}; // convert path to "char* const* "
