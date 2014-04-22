@@ -71,9 +71,12 @@ Result<int> FileSystemWalker::Action() {
    // fts_open arguments:
    //      FTS_PHYSICAL: Symbolic links will NOT be followed
    //      FTS_XDEV : will not go to a different mount point then the starting point
+   //      FTS_NOCHDIR: IMPORTANT:   This flag is needed for thread safety. 
+   //                    Internally it will NOT do any chdir calls with this flag, 
+   //                    but it will slow down the execution a bit
    //      nullptr     : no specific ordering is made for returning the results
    // Reference: http://man7.org/linux/man-pages/man3/fts.3.html
-   FTS* file_system = fts_open(ftsRawPath, FTS_PHYSICAL | FTS_XDEV, nullptr);
+   FTS* file_system = fts_open(ftsRawPath, FTS_PHYSICAL | FTS_XDEV | FTS_NOCHDIR, nullptr);
    if (nullptr == file_system) {
       return Result<int>{-1, {"Could not open filesystem at: " + mStartPath}};
    }
