@@ -12,7 +12,7 @@
 #include "Result.h"
 
 /*
- * FileSystemWalker to be used instead of the thread-unsafe "ftw.h" (ftw, nftw, nftw64)
+ * FileSystemWalker is used in a similar way to the c-libraries "ftw, nftw, nftw64" but is thread-safe. 
  */
 class FileSystemWalker {
 public:

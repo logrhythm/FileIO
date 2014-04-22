@@ -9,7 +9,9 @@
 #include "FileIO.h"
 #include <sys/types.h>
 #include <cerrno>
-#include <cstring> // std::strerror
+#include <cstring> 
+
+
 namespace {
    struct ScopedFts {
       FTS* mFts;
@@ -50,13 +52,13 @@ bool FileSystemWalker::IsValid() const {
  *
  * Example usage:
    @verbatim
-  // The saved results should be saved INSIDE the given FTSENT handler
-  // Silly example to cound all file system entities encountered:
+  // Example of how to count all file system entities from a given path
+ // The saved results is saved INSIDE the given FTSENT handler
   void SomeFunc() {
     size_t entityCounter;
     std::function<int(FTSENT*,int> CountFiles= [&](FTSENT *ptr, int flag) { ++entityCounter;}; 
     FileSystemWalker walker(path, CountFiles);
-    walker.Action(); // this will touch filecounter which we can use later
+    walker.Action(); // this will increment entityCounter until the file path is exhausted
   @endvarbatim
  */
 Result<int> FileSystemWalker::Action() {
