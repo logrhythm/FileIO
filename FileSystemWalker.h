@@ -20,6 +20,9 @@ public:
    bool IsValid() const;
    Result<int> Action();
 
+   FileSystemWalker() = delete;
+   FileSystemWalker(const FileSystemWalker&) = delete;
+   FileSystemWalker& operator=(const FileSystemWalker&) = delete;   
 private:
    const std::string mStartPath;
    std::function<int(FTSENT*, int) > mFtsHandler;

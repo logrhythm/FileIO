@@ -15,11 +15,17 @@
 namespace {
    struct ScopedFts {
       FTS* mFts;
+
       explicit ScopedFts(FTS* fts) : mFts(fts) { }
 
       ~ScopedFts() {
          fts_close(mFts);
       }
+
+      ScopedFts() = delete;
+      ScopedFts(const FileSystemWalker&) = delete;
+      ScopedFts& operator=(const FileSystemWalker&) = delete;
+
    };
 }
 
