@@ -19,7 +19,7 @@
 #include "include/global.h"
 #include "Result.h"
 namespace FileIO {
-
+   Result<bool> IsMountPoint(const std::string& pathToDirectory);
    Result<std::string> ReadAsciiFileContent(const std::string& pathToFile);
    Result<bool> WriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
    Result<bool> AppendWriteAsciiFileContent(const std::string& pathToFile, const std::string& content);

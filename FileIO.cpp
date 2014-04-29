@@ -24,6 +24,52 @@ namespace FileIO {
    std::mutex mPermissionsMutex;
 
    
+   
+   /**
+    * Reads the stats for the path to see if it is a mountpoint
+    * @param pathToDirectory that may be a mountpoint
+    * @param returns Result<true> if it is a mountpoint
+    */
+   Result<bool> IsMountPoint(const std::string& pathToDirectory) {
+      // A mount point must be a block-device, folder and with a separate device-ID from its ".." parent
+      
+      struct stat info;
+      if (0 != stat(pathToDirectory.c_str(), &info)) {
+         return Result<bool>{false, {"Cannot stat read location: " + pathToDirectory}};
+      }
+      
+      // 0 equals failure
+      if (0 == S_ISBLK(info.st_mode)) {
+         return Result<bool>{false, {" [" + pathToDirectory + "] is not a block device"}};
+      }    
+      
+      
+      if (0 == S_ISDIR(info.st_mode)) {
+         return Result<bool>{false, {"Directory + [" + pathToDirectory + "] does not exist"}};
+      }      
+      
+      std::string parentPath = pathToDirectory;
+      if('/' != parentPath.back()){
+         parentPath.append("/..");
+      } else {
+         parentPath.append("..");   
+      }
+     
+      struct stat parent; 
+      if (0 != stat(parentPath.c_str(), &parent)) {
+         return Result<bool>{false, {"Cannot stat read parent location: [" + parentPath +"]"}};
+      }
+      
+      //  st_dev: device number. st_ino: inode number
+      const bool isMountPoint = (info.st_dev != parent.st_dev) || (info.st_dev == parent.st_dev && info.st_ino == parent.st_ino);
+      if (!isMountPoint) {
+         return Result<bool>{false, {"[" + parentPath + "] is not a mountpoint"}};
+      }
+      
+      return Result<bool>{true};
+   }
+
+   
    /**
     * Reads content of Ascii file
     * @param pathToFile to read
