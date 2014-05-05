@@ -38,15 +38,9 @@ namespace FileIO {
          return Result<bool>{false, {"Cannot stat read location: " + pathToDirectory}};
       }
       
-      // 0 equals failure
-      if (0 == S_ISBLK(info.st_mode)) {
-         return Result<bool>{false, {" [" + pathToDirectory + "] is not a block device"}};
-      }    
-      
-      
-      if (0 == S_ISDIR(info.st_mode)) {
+      if (!S_ISDIR(info.st_mode)) {
          return Result<bool>{false, {"Directory + [" + pathToDirectory + "] does not exist"}};
-      }      
+      }       
       
       std::string parentPath = pathToDirectory;
       if('/' != parentPath.back()){
