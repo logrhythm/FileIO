@@ -13,6 +13,8 @@
 #include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/sendfile.h>
+#include <fcntl.h>    // open
 #include <ctime>
 #include <cstdio>
 #include <cstdlib>
@@ -295,6 +297,68 @@ namespace FileIO {
       }
       return Result<bool>{true};
    }
+   
+   
+   namespace {
+      struct ScopedFileDescriptor {
+         int fd;
+         ScopedFileDescriptor(const std::string& location, const int flags, const int permission) {
+            fd = open(location.c_str(), flags, permission);
+         } 
+         ~ScopedFileDescriptor() {
+            close(fd);
+         }
+      };
+   }
+
+   
+   /**
+    * Move a file to another location. This works across device boundaries contrary to 
+    * 'rename'
+    * 
+    * @return true if moved successfully and deleted the previous file successfully
+    *         false if move fail or the original file could not be deleted. For all failure 
+    *         cases errno will be set
+    *
+    * Reference: 
+    * http://linux.die.net/man/3/rename
+    * http://linux.die.net/man/3/open
+    * http://www.lehman.cuny.edu/cgi-bin/man-cgi?sendfile+3
+    * 
+    * Performance sendfile vs user-level copy: 
+    * http://stackoverflow.com/questions/10195343/copy-a-file-in-an-sane-safe-and-efficient-way
+    */
+   bool MoveFile(const std::string& sourcePath, const std::string& destPath) {
+      if (!DoesFileExist(sourcePath) || sourcePath == destPath) {
+         return false;
+      }
+
+      
+      int tryRename = rename(sourcePath.c_str(), destPath.c_str());
+      
+      if (-1 == tryRename) {
+         // On a separate device. Clear errno and try with sendfile
+         errno = 0;
+         ScopedFileDescriptor src(sourcePath, O_RDONLY, 0);
+         struct stat stat_src;
+         fstat(src.fd, &stat_src);
+
+         ScopedFileDescriptor dest(destPath, O_WRONLY | O_CREAT, stat_src.st_mode);
+         off_t offset = 0; // byte offset for sendfile
+         tryRename = sendfile(dest.fd, src.fd, &offset, stat_src.st_size);
+
+         if (0 == tryRename) {
+            tryRename = unlink(sourcePath.c_str());
+         }
+      }
+
+      return (0 == tryRename);
+   }
+   
+   
+   
+   
+   
 
    /**
     * Helper lambda to instantiate the const Result<bool> AFTER
