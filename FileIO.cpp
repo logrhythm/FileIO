@@ -332,8 +332,7 @@ namespace FileIO {
       if (!DoesFileExist(sourcePath) || sourcePath == destPath) {
          return false;
       }
-
-      
+     
       int tryRename = rename(sourcePath.c_str(), destPath.c_str());
       
       if (-1 == tryRename) {
