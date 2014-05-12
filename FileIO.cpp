@@ -333,9 +333,9 @@ namespace FileIO {
          return false;
       }
      
-      int tryRename = rename(sourcePath.c_str(), destPath.c_str());
+      int64_t rc = rename(sourcePath.c_str(), destPath.c_str());
       
-      if (-1 == tryRename) {
+      if (-1 == rc) {
          // On a separate device. Clear errno and try with sendfile
          errno = 0;
          ScopedFileDescriptor src(sourcePath, O_RDONLY, 0);
@@ -344,14 +344,22 @@ namespace FileIO {
 
          ScopedFileDescriptor dest(destPath, O_WRONLY | O_CREAT, stat_src.st_mode);
          off_t offset = 0; // byte offset for sendfile
-         tryRename = sendfile(dest.fd, src.fd, &offset, stat_src.st_size);
-
-         if (0 == tryRename) {
-            tryRename = unlink(sourcePath.c_str());
-         }
+         
+         // sendfile returns -1 for failure else number of bytes sent
+         // sendfile can only move std::numeric_limits<int>::max() each time
+         //           i.e  2147483647 bytes (1.999... GB)
+         // 'sendfile' is repeatedly called until all of the file is copied
+         rc = sendfile(dest.fd, src.fd, &offset, stat_src.st_size);
+         while (rc > 0 && rc < stat_src.st_size && !zctx_interrupted)  {
+            rc += sendfile(dest.fd, src.fd, &offset, stat_src.st_size);
+         }         
+                
+         if (-1 != rc && rc == stat_src.st_size) {
+            rc = remove(sourcePath.c_str());
+         } 
       }
 
-      return (0 == tryRename);
+      return (0 == rc);
    }
    
    
