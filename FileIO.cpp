@@ -328,7 +328,7 @@ namespace FileIO {
     * Performance sendfile vs user-level copy: 
     * http://stackoverflow.com/questions/10195343/copy-a-file-in-an-sane-safe-and-efficient-way
     */
-   bool MoveFile(const std::string& sourcePath, const std::string& destPath) {
+   bool MoveFile(const std::string& sourcePath, const std::string& destPath) {      
       if (!DoesFileExist(sourcePath) || sourcePath == destPath) {
          return false;
       }
@@ -341,8 +341,9 @@ namespace FileIO {
          ScopedFileDescriptor src(sourcePath, O_RDONLY, 0);
          struct stat stat_src;
          fstat(src.fd, &stat_src);
+         const int permissions = stat_src.st_mode; 
 
-         ScopedFileDescriptor dest(destPath, O_WRONLY | O_CREAT, stat_src.st_mode);
+         ScopedFileDescriptor dest(destPath, O_WRONLY | O_CREAT, permissions);
          off_t offset = 0; // byte offset for sendfile
          
          // sendfile returns -1 for failure else number of bytes sent
@@ -352,11 +353,22 @@ namespace FileIO {
          rc = sendfile(dest.fd, src.fd, &offset, stat_src.st_size);
          while (rc > 0 && rc < stat_src.st_size && !zctx_interrupted)  {
             rc += sendfile(dest.fd, src.fd, &offset, stat_src.st_size);
-         }         
-                
-         if (-1 != rc && rc == stat_src.st_size) {
+         }  
+         
+         // for certain file permissions unit testing gave that the permissions
+         // were not preserved over the sendfile call. If this is the case
+         // we re-set the same permissions as the original file had
+         struct stat stat_dest;
+         fstat(dest.fd, &stat_dest);
+         int64_t rcStat = {0};
+         if (permissions != stat_dest.st_mode & permissions) {
+            rcStat = chmod(destPath.c_str(), permissions);
+         }
+         
+         
+         if (-1 != rc && rc == stat_src.st_size && (0 == rcStat)) {
             rc = remove(sourcePath.c_str());
-         } 
+         }
       }
 
       return (0 == rc);
