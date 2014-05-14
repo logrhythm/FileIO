@@ -17,8 +17,8 @@
 #include <fcntl.h>    
 #include <pwd.h>
 
-#include "include/global.h"
 #include "Result.h"
+
 namespace FileIO {
    void SetInterruptFlag(volatile int* interrupted = nullptr);    
    bool Interrupted();
