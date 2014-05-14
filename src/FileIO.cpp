@@ -476,6 +476,7 @@ namespace FileIO {
       Entry entry = std::make_pair(FileType::Unknown, "");
       bool found = false;
       while (!found && (entry.first != FileType::End)) {
+         readdir64_r(mDirectory, &mEntry, &mResult); // readdir_r is reentrant 
 
          found = true; // abort immediately unless we hit "." or ".."
 
