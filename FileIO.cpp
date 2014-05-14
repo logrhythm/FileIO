@@ -14,17 +14,36 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/sendfile.h>
-#include <fcntl.h>    // open
 #include <ctime>
 #include <cstdio>
 #include <cstdlib>
 #include <cerrno>
 #include <cstring>
-#include <czmq.h> // zctx_interrupted
 
 namespace FileIO {
    std::mutex mPermissionsMutex;
-
+   volatile int* gFlagInterrupt = nullptr;
+   
+   
+   /**
+    * Makes it possible to set an interrupt handler flag to break possibly
+    * lengthy operations such as MoveFile or CleanDirectoryOfFileContents
+    * @param interrupted interrupt handler flag
+    */
+   void SetInterruptFlag(volatile int* interrupted) {
+      gFlagInterrupt = interrupted;
+   }
+   
+   /**
+    * @return true if interrupt flag is initialized AND set to signal an interrupt
+    */
+   bool Interrupted() {
+      if (nullptr == gFlagInterrupt) {
+         return false;
+      }
+      
+      return (*gFlagInterrupt > 0);
+   }
    
    /**
     * Reads content of Ascii file
@@ -181,7 +200,7 @@ namespace FileIO {
             }
          }
          // FileIO::FileSystem::Unknown is ignored
-      } while (!zctx_interrupted && entry.first != FileIO::FileType::End);
+      } while (!Interrupted() && entry.first != FileIO::FileType::End);
 
       std::string report;
       if (failures > 0) {
@@ -299,17 +318,8 @@ namespace FileIO {
    }
    
    
-   namespace {
-      struct ScopedFileDescriptor {
-         int fd;
-         ScopedFileDescriptor(const std::string& location, const int flags, const int permission) {
-            fd = open(location.c_str(), flags, permission);
-         } 
-         ~ScopedFileDescriptor() {
-            close(fd);
-         }
-      };
-   }
+
+   
 
    
    /**
@@ -330,7 +340,7 @@ namespace FileIO {
     */
    bool MoveFile(const std::string& sourcePath, const std::string& destPath) {      
       if (!DoesFileExist(sourcePath) || sourcePath == destPath) {
-         return false;
+         return false; // DoesFileExist sets errno: ENOENT i.e. No such file or directory
       }
      
       int64_t rc = rename(sourcePath.c_str(), destPath.c_str());
@@ -351,7 +361,7 @@ namespace FileIO {
          //           i.e  2147483647 bytes (1.999... GB)
          // 'sendfile' is repeatedly called until all of the file is copied
          rc = sendfile(dest.fd, src.fd, &offset, stat_src.st_size);
-         while (rc > 0 && rc < stat_src.st_size && !zctx_interrupted)  {
+         while (rc > 0 && rc < stat_src.st_size && !Interrupted())  {
             rc += sendfile(dest.fd, src.fd, &offset, stat_src.st_size);
          }  
          

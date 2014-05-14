@@ -14,11 +14,17 @@
 #include <dirent.h>
 #include <sys/fsuid.h>
 #include <unistd.h>
+#include <fcntl.h>    
 #include <pwd.h>
 
 #include "include/global.h"
 #include "Result.h"
 namespace FileIO {
+   
+   
+   void SetInterruptFlag(volatile int* interrupted = nullptr);    
+   bool Interrupted();
+           
 
    Result<std::string> ReadAsciiFileContent(const std::string& pathToFile);
    Result<bool> WriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
@@ -62,4 +68,16 @@ namespace FileIO {
       struct dirent64* mResult;
       Result<bool> mValid;
    };   
+   
+   
+   struct ScopedFileDescriptor {
+      int fd;
+      ScopedFileDescriptor(const std::string& location, const int flags, const int permission) {
+         fd = open(location.c_str(), flags, permission);
+      }
+
+      ~ScopedFileDescriptor() {
+         close(fd);
+      }
+   };
 }
