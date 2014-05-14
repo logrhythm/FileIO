@@ -19,10 +19,11 @@ set(DIR_3RDPARTY ${FileIO_SOURCE_DIR}/3rdparty)
 MESSAGE(" PROJECT_SRC = : ${PROJECT_SRC}")
 include_directories(${PROJECT_SRC})
 SET(ACTIVE_CPP0xx_DIR "Release")
-
 find_library(G2LOG lib_g2log PATHS /usr/local/probe/lib )
 find_library(BOOST_THREAD boost_thread PATHS /usr/local/probe/lib )
 find_library(BOOST_SYSTEM boost_thread PATHS /usr/local/probe/lib )
+find_library(CZMQ czmq PATHS /usr/local/probe/lib )
+find_library(ZMQ zmq PATHS /usr/local/probe/lib )
 find_library(TCMALLOC tcmalloc PATHS /usr/local/probe/lib )
 
 #cmake -DCMAKE_CXX_COMPILER=clang++ ..
@@ -102,4 +103,4 @@ file(GLOB TEST_SRC_FILES "test/*.cpp")
 IF( NOT(MSVC))
   set_target_properties(${test} PROPERTIES COMPILE_FLAGS "-isystem -pthread ")
 ENDIF( NOT(MSVC))
-target_link_libraries(UnitTestRunner FileIO StopWatch boost_thread boost_system lib_g2log gtest_170_lib -lstdc++ -ltcmalloc ${PLATFORM_LINK_LIBRIES})
+target_link_libraries(UnitTestRunner FileIO StopWatch boost_thread boost_system lib_g2log gtest_170_lib -lstdc++ -ltcmalloc ${PLATFORM_LINK_LIBRIES} -Wl,-rpath,. -Wl,-rpath,/usr/local/probe/lib  -Wl,-rpath,/usr/local/probe/lib64 )
