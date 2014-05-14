@@ -391,7 +391,7 @@ namespace FileIO {
          ScopedFileDescriptor src(sourcePath, O_RDONLY, 0);
          struct stat stat_src;
          fstat(src.fd, &stat_src);
-         const int permissions = stat_src.st_mode; 
+         const unsigned int permissions = stat_src.st_mode; 
 
          ScopedFileDescriptor dest(destPath, O_WRONLY | O_CREAT, permissions);
          off_t offset = 0; // byte offset for sendfile
@@ -411,7 +411,7 @@ namespace FileIO {
          struct stat stat_dest;
          fstat(dest.fd, &stat_dest);
          int64_t rcStat = {0};
-         if (permissions != stat_dest.st_mode & permissions) {
+         if (permissions != (stat_dest.st_mode & permissions)) {
             rcStat = chmod(destPath.c_str(), permissions);
          }
          
@@ -438,7 +438,6 @@ namespace FileIO {
       auto DirectoryInit = [](DIR** directory, const std::string pathToDirectory) -> Result<bool> {
          *directory = opendir(pathToDirectory.c_str());
           std::string error{""};
-          bool success = true;
 
          if (nullptr == *directory) {
             std::string error{std::strerror(errno)};
@@ -477,7 +476,6 @@ namespace FileIO {
       Entry entry = std::make_pair(FileType::Unknown, "");
       bool found = false;
       while (!found && (entry.first != FileType::End)) {
-         auto ignoredError = readdir64_r(mDirectory, &mEntry, &mResult); // readdir_r is reentrant 
 
          found = true; // abort immediately unless we hit "." or ".."
 

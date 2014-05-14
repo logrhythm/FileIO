@@ -25,7 +25,8 @@ public:
    FileSystemWalker(const FileSystemWalker&) = delete;
    FileSystemWalker& operator=(const FileSystemWalker&) = delete;   
 private:
-   const std::string mStartPath;
+   
    std::function<int(FTSENT*, int) > mFtsHandler;
+   const std::string mStartPath;
 };
 
