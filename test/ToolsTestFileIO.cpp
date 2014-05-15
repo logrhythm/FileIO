@@ -382,7 +382,7 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__LargeFileCanBeMovedAcrossDevices) {
       // Create the 3GB file
       std::string file1_3GBPath = {oldStorage + "/file1_3GB"};
       // use dd to write   (possibly)non zeroed data to the file
-      std::string createFile3GB = {"dd bs=1024 count=3145728 if=/dev/sdb of="}; // 3GB : 3145728 * 1024 bytes 
+      std::string createFile3GB = {"dd bs=1024 count=3145728 if=/dev/zero of="}; // 3GB : 3145728 * 1024 bytes 
       std::string createFile1 = {createFile3GB + file1_3GBPath};
       ScopedFileCleanup fileOldCleaner(file1_3GBPath);
       EXPECT_EQ(0, system(createFile1.c_str()));
