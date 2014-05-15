@@ -587,11 +587,11 @@ TEST_F(TestFileIO, DirectoryReader_HasFilesInDirectory__AfterReset) {
       if (fileAndType.first == FileType::Directory) {
          directoryname = fileAndType.second;
          fileAndType = reader.Next();
-      }
-
-      if (fileAndType.first == FileType::File) {
+      } else if (fileAndType.first == FileType::File) {
          filename = fileAndType.second;
-         reader.Next();
+         fileAndType = reader.Next();
+      } else { 
+         std::cout << "got unknown result" << fileAndType.second << std::endl;
       }
    }
 
