@@ -15,6 +15,7 @@
 #include <thread>
 #include <random>
 #include <sstream>
+ #include <unistd.h>
 #include "ToolsTestFileIO.h"
 #include "FileIO.h"
 #include "StopWatch.h"
@@ -40,6 +41,13 @@ namespace {
       }
    };
    
+
+   std::string GetCurrentDirectory() {
+      char* rawdir = get_current_dir_name();
+      std::string dir{rawdir};
+      free(rawdir);
+      return dir;
+   }
 } // anonymous
 
 
@@ -260,18 +268,14 @@ TEST_F(TestFileIO, MoveFiles__FileCanBeMovedAcrossDirectories) {
 
 
 TEST_F(TestFileIO, SYSTEM__MoveFiles__ThreadSafeMoveOfFiles) {
-   std::string oldStorage = "/usr/local/probe/pcap";
-   std::string newStorage = "/pcap0";
+   std::string oldStorage = "/tmp";
+   std::string newStorage = GetCurrentDirectory();
    if (false == FileIO::DoesDirectoryExist(oldStorage)) {
-      if (FileIO::DoesDirectoryExist("/tmp")) {
-         oldStorage = "/tmp";
-      }
+      FAIL() << "Cannot run test. Directory does not exist: " << oldStorage;
    }
 
    if (false == FileIO::DoesDirectoryExist(newStorage)) {
-      if (FileIO::DoesDirectoryExist("/home/")) {
-         newStorage = "/home/";
-      }
+      FAIL() << "Cannot run test. Directory does not exist: " << newStorage;
    }
 
    // Verify that they are on different devices
@@ -342,25 +346,22 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__ThreadSafeMoveOfFiles) {
 //
 // Example
 // sudo dd bs=1024 count=3145728 if=/dev/sdb of=/tmp/hej.txt
-// time sudo mv /tmp/hej.txt /pcap0/.
+// time sudo mv /tmp/hej.txt  ~/.
 //  
 //   real    0m3.430s
 //   user    0m0.021s
 //   sys     0m3.401s
 TEST_F(TestFileIO, SYSTEM__MoveFiles__LargeFileCanBeMovedAcrossDevices) {
-   std::string oldStorage = "/usr/local/probe/pcap";
-   std::string newStorage = "/pcap0";
+   std::string oldStorage = "/tmp";
+   std::string newStorage = GetCurrentDirectory();
    if (false == FileIO::DoesDirectoryExist(oldStorage)) {
-      if (FileIO::DoesDirectoryExist("/tmp")) {
-         oldStorage = "/tmp";
-      }
+      FAIL() << "Cannot run test. directory does not exist: " << oldStorage;
    }
 
    if (false == FileIO::DoesDirectoryExist(newStorage)) {
-      if (FileIO::DoesDirectoryExist("/home/")) {
-         newStorage = "/home/";
-      }
+      FAIL() << "Cannot run test. directory does not exist: " << newStorage;
    }
+
 
    // Verify that they are on different devices
    struct stat stat_path1;
@@ -481,6 +482,74 @@ TEST_F(TestFileIO, CleanDirectoryOfFileContents__StopsWhenInterrupted) {
    FileIO::SetInterruptFlag(); // reset before we can exit the test
    EXPECT_EQ(removedFiles, 1); // NOT TWO files since we interrupted it
 }
+
+TEST_F(TestFileIO, CleanDirectory__NoDirectory__ExpectFailure) {
+   std::string nonsense = "/bla/bla/bla/does/not/exist";
+   const bool removeStartDirectory = true;
+   const bool keepStartDirectory = false;
+   auto result = FileIO::CleanDirectory(nonsense, removeStartDirectory);
+   EXPECT_TRUE(result.HasFailed());
+   auto result2 = FileIO::CleanDirectory(nonsense, keepStartDirectory);
+   EXPECT_TRUE(result2.HasFailed());
+
+   // same for a file
+   auto file = CreateFile(mTestDirectory, "file.txt");
+   EXPECT_TRUE(FileIO::DoesFileExist(file));
+   auto result3 = FileIO::CleanDirectory(file, keepStartDirectory);
+   EXPECT_TRUE(result3.HasFailed());
+}
+
+TEST_F(TestFileIO, CleanDirectoryOfFilesAndDirectories) {
+   const std::string baseDir = CreateSubDirectory("base");
+   ASSERT_TRUE(FileIO::DoesDirectoryExist(baseDir));
+
+
+   auto createContent = [&]() {
+      // Create a bunch of directories. both with content and emtpy
+      std::string currentLevel = baseDir;
+      for (size_t index = 0; index < 100; ++index){
+         std::string dir1 = CreateSubDirectory("dir1", currentLevel);
+         std::string dir2 = CreateSubDirectory("dir2", currentLevel);
+         EXPECT_TRUE(FileIO::DoesDirectoryExist(dir1));
+         EXPECT_TRUE(FileIO::DoesDirectoryExist(dir2));
+
+         std::string file = CreateFile(dir1, "file.txt");
+         EXPECT_TRUE(FileIO::DoesFileExist(file));
+         currentLevel = dir1;
+      }
+   };
+
+   
+   createContent();
+   EXPECT_TRUE(FileIO::DoesDirectoryExist({baseDir + "/dir1"}));
+   EXPECT_TRUE(FileIO::DoesDirectoryExist({baseDir + "/dir2"}));
+   EXPECT_TRUE(FileIO::DoesFileExist({baseDir + "/dir1/file.txt"}));
+
+
+   // keep base dir
+   const bool keepStartDirectory = false;
+   auto result1 = FileIO::CleanDirectory(baseDir, keepStartDirectory);
+   EXPECT_EQ(result1.HasFailed(), false);
+   EXPECT_FALSE(FileIO::DoesDirectoryExist({baseDir + "/dir1"}));
+   EXPECT_FALSE(FileIO::DoesDirectoryExist({baseDir + "/dir2"}));
+   EXPECT_FALSE(FileIO::DoesFileExist({baseDir + "/dir1/file.txt"}));
+   EXPECT_TRUE(FileIO::DoesDirectoryExist(baseDir)); // BASE DIR IS KEPT
+
+
+   // remove base dir
+   createContent();
+   const bool removeStartDirectory = true;
+   auto result2 = FileIO::CleanDirectory(baseDir, removeStartDirectory);
+   EXPECT_EQ(result2.HasFailed(), false);
+   EXPECT_FALSE(FileIO::DoesDirectoryExist({baseDir + "/dir1"}));
+   EXPECT_FALSE(FileIO::DoesDirectoryExist({baseDir + "/dir2"}));
+   EXPECT_FALSE(FileIO::DoesFileExist({baseDir + "/dir1/file.txt"}));
+   EXPECT_FALSE(FileIO::DoesDirectoryExist(baseDir)); // BASE DIR IS REMOVED
+
+}
+
+
+
 
 
 
@@ -673,7 +742,7 @@ TEST_F(TestFileIO, DISABLED_System_Performance_FileIO__vs_Boost) {
 
    size_t filecounter = 0;
 
-   std::string path = {"/usr/local/probe/pcap"};
+   std::string path = {"/tmp"};
    DirectoryReader reader(path);
    if (false == reader.Valid().HasFailed()) {
       reader.Next();

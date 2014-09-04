@@ -20,10 +20,6 @@ MESSAGE(" PROJECT_SRC = : ${PROJECT_SRC}")
 include_directories(${PROJECT_SRC})
 SET(ACTIVE_CPP0xx_DIR "Release")
 find_library(G2LOG lib_g2log PATHS /usr/local/probe/lib )
-find_library(BOOST_THREAD boost_thread PATHS /usr/local/probe/lib )
-find_library(BOOST_SYSTEM boost_thread PATHS /usr/local/probe/lib )
-find_library(CZMQ czmq PATHS /usr/local/probe/lib )
-find_library(ZMQ zmq PATHS /usr/local/probe/lib )
 find_library(TCMALLOC tcmalloc PATHS /usr/local/probe/lib )
 
 #cmake -DCMAKE_CXX_COMPILER=clang++ ..
@@ -51,20 +47,6 @@ ELSEIF("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
        set(PLATFORM_LINK_LIBRIES rt)
        set(CMAKE_CXX_FLAGS "-Wall -rdynamic -Wunused -std=c++11 -pthread -D_GLIBCXX_USE_NANOSLEEP")
    endif()
-
-ELSEIF(MSVC)
-      # VC11 bug: http://code.google.com/p/googletest/issues/detail?id=408
-      # add_definition(-D_VARIADIC_MAX=10)
-      # https://github.com/anhstudios/swganh/pull/186/files
-      ADD_DEFINITIONS (/D_VARIADIC_MAX=10)
-      MESSAGE(STATUS "- MSVC: Set variadic max to 10 for MSVC compatibility")
-      # Remember to set set target properties if using GTEST similar to done below on target "unit_test"
-      # "set_target_properties(unit_test PROPERTIES COMPILE_DEFINITIONS "GTEST_USE_OWN_TR1_TUPLE=0")
-   MESSAGE("")
-   MESSAGE("Windows: Please run the command [cmake -DCMAKE_BUILD_TYPE=Release -G \"Visual Studio 11\" ..]")
-   MESSAGE("if cmake finishes OK, do 'msbuild TestOfFileIO.sln /p:Configuration=Release'")
-   MESSAGE("then run 'Release\\TestOfFileIO.exe'")
-   MESSAGE("")
 ENDIF()
 
 
@@ -81,7 +63,6 @@ set_target_properties(FileIO_shared PROPERTIES LINKER_LANGUAGE CXX)
 
 # create the unit tests
 # =========================
-
 set(GTEST_DIR ${DIR_3RDPARTY}/gtest-1.7.0)
 set(GTEST_INCLUDE_DIRECTORIES ${GTEST_DIR}/include ${GTEST_DIR} ${GTEST_DIR}/src)
 MESSAGE( "Attempt to build gtest. gtest directory: " ${GTEST_DIR})
@@ -103,4 +84,4 @@ file(GLOB TEST_SRC_FILES "test/*.cpp")
 IF( NOT(MSVC))
   set_target_properties(${test} PROPERTIES COMPILE_FLAGS "-isystem -pthread ")
 ENDIF( NOT(MSVC))
-target_link_libraries(UnitTestRunner FileIO StopWatch boost_thread boost_system lib_g2log gtest_170_lib -lstdc++ -ltcmalloc ${PLATFORM_LINK_LIBRIES} -Wl,-rpath,. -Wl,-rpath,/usr/local/probe/lib  -Wl,-rpath,/usr/local/probe/lib64 )
+target_link_libraries(UnitTestRunner FileIO StopWatch lib_g2log gtest_170_lib -lstdc++ -ltcmalloc ${PLATFORM_LINK_LIBRIES} -Wl,-rpath,. -Wl,-rpath,/usr/local/probe/lib  -Wl,-rpath,/usr/local/probe/lib64 )
