@@ -271,11 +271,13 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__ThreadSafeMoveOfFiles) {
    std::string oldStorage = "/tmp";
    std::string newStorage = GetCurrentDirectory();
    if (false == FileIO::DoesDirectoryExist(oldStorage)) {
-      FAIL() << "Cannot run test. Directory does not exist: " << oldStorage;
+      SUCCEED() << "Skipping test. Cannot run test. Directory does not exist: " << oldStorage;
+      return;
    }
 
    if (false == FileIO::DoesDirectoryExist(newStorage)) {
-      FAIL() << "Cannot run test. Directory does not exist: " << newStorage;
+      SUCCEED() << "Skipping test. Cannot run test. Directory does not exist: " << newStorage;
+      return;
    }
 
    // Verify that they are on different devices
@@ -284,56 +286,56 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__ThreadSafeMoveOfFiles) {
    stat(oldStorage.c_str(), &stat_path1);
    stat(newStorage.c_str(), &stat_path2);
    if (stat_path1.st_dev == stat_path2.st_dev) {
-      std::string warning = "CANNOT RUN TEST FOR VERIFYING MOVE OF FILES ACROSS DEVICES";
+      std::string warning = "SKIPPING TEST. CANNOT RUN TEST FOR VERIFYING MOVE OF FILES ACROSS DEVICES";
       std::cout << warning << std::endl;
       LOG(WARNING) << warning;
-      FAIL() << warning;
-   } else {
+      SUCCEED() << warning;
+      return;
+   } 
 
 
-      // Create all the files. Put a given size to them and vary the permissions
-      const size_t movesToMake = 250;
-      for (size_t i = 0; i < movesToMake; ++i) {
-         const size_t kbytes = i*10;
-         std::string from{oldStorage + "/from_" + std::to_string(i)};
-         std::string createFile = {"dd bs=1024 count=" + std::to_string(kbytes) + " if=/dev/zero of=" + from + " >& /dev/null"}; // skip printf from dd
-         EXPECT_EQ(0, system(createFile.c_str()));
-         int permissions = 777;
-         if (0 == i%2) {
-            permissions = 640;
-         } else if (0 == i%3) {
-            permissions = 555;
-         }
-         
-         // Verify creation
-         EXPECT_TRUE(FileIO::DoesFileExist(from)); 
-         EXPECT_TRUE(0 == chmod(from.c_str(), permissions));
-
-         struct stat filestat;
-         stat(from.c_str(), &filestat);
-         EXPECT_EQ(filestat.st_size, (1024 * kbytes));
-         EXPECT_EQ(filestat.st_mode & permissions, permissions);
+   // Create all the files. Put a given size to them and vary the permissions
+   const size_t movesToMake = 250;
+   for (size_t i = 0; i < movesToMake; ++i) {
+      const size_t kbytes = i*10;
+      std::string from{oldStorage + "/from_" + std::to_string(i)};
+      std::string createFile = {"dd bs=1024 count=" + std::to_string(kbytes) + " if=/dev/zero of=" + from + " >& /dev/null"}; // skip printf from dd
+      EXPECT_EQ(0, system(createFile.c_str()));
+      int permissions = 777;
+      if (0 == i%2) {
+         permissions = 640;
+      } else if (0 == i%3) {
+         permissions = 555;
       }
+         
+      // Verify creation
+      EXPECT_TRUE(FileIO::DoesFileExist(from)); 
+      EXPECT_TRUE(0 == chmod(from.c_str(), permissions));
+
+      struct stat filestat;
+      stat(from.c_str(), &filestat);
+      EXPECT_EQ(filestat.st_size, (1024 * kbytes));
+      EXPECT_EQ(filestat.st_mode & permissions, permissions);
+   }
       
       
-      std::vector<std::future<void>> result;
-      for (size_t i = 0; i < movesToMake; ++i) {
-         std::string from{oldStorage + "/from_" + std::to_string(i)};
-         std::string to{newStorage + "/to_" + std::to_string(i)};
-         int permissions = 777;
-         if (0 == i%2) {
-            permissions = 640;
+   std::vector<std::future<void>> result;
+   for (size_t i = 0; i < movesToMake; ++i) {
+      std::string from{oldStorage + "/from_" + std::to_string(i)};
+      std::string to{newStorage + "/to_" + std::to_string(i)};
+      int permissions = 777;
+      if (0 == i%2) {
+         permissions = 640;
        } else if (0 == i%3) {
-            permissions = 555;
-         }
+         permissions = 555;
+      }
          
-         const size_t kbytes = i*10;
-         result.push_back(std::async(std::launch::async, FileMover, from, to, permissions, kbytes));
-      }
+      const size_t kbytes = i*10;
+      result.push_back(std::async(std::launch::async, FileMover, from, to, permissions, kbytes));
+   }
 
-      for (auto& res : result) {
-         res.wait();
-      }
+   for (auto& res : result) {
+      res.wait();
    }
 }
    
@@ -355,11 +357,13 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__LargeFileCanBeMovedAcrossDevices) {
    std::string oldStorage = "/tmp";
    std::string newStorage = GetCurrentDirectory();
    if (false == FileIO::DoesDirectoryExist(oldStorage)) {
-      FAIL() << "Cannot run test. directory does not exist: " << oldStorage;
+       SUCCEED() << "Skipping test. Cannot run test. directory does not exist: " << oldStorage;
+       return;
    }
 
    if (false == FileIO::DoesDirectoryExist(newStorage)) {
-      FAIL() << "Cannot run test. directory does not exist: " << newStorage;
+      SUCCEED() << "Skipping test. Cannot run test. directory does not exist: " << newStorage;
+      return;
    }
 
 
@@ -369,10 +373,10 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__LargeFileCanBeMovedAcrossDevices) {
    stat(oldStorage.c_str(), &stat_path1);
    stat(newStorage.c_str(), &stat_path2);
    if (stat_path1.st_dev == stat_path2.st_dev) {
-      std::string warning = "CANNOT RUN TEST FOR VERIFYING MOVE OF FILES ACROSS DEVICES";
+      std::string warning = "SKIPPING TEST. CANNOT RUN TEST FOR VERIFYING MOVE OF FILES ACROSS DEVICES";
       std::cout <<  warning << std::endl;
       LOG(WARNING) << warning;
-      FAIL() << warning;
+      SUCCEED() << warning;
    } else {
       
       //
