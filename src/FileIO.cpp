@@ -249,7 +249,47 @@ namespace FileIO {
       return Result<bool>{(0 == failures), report};
    }
    
-   
+   /**
+   *  Iterate through the given directory location. Remove files and directories recursively until empty
+   * @param directory, the directory to remove content from
+   * @param removeDirectory, whether or not the start directory should be removed
+   *  @return how many entities that were not removed. I.e. a successfull remove of all would have zero entities left
+   */ 
+   Result<bool> CleanDirectory(const std::string & directory, const bool removeDirectory){
+      std::string report;
+      bool noFailures = true;
+
+      std::vector<std::string> foundDirectories;
+      size_t filesRemoved {0};
+      auto cleanAllFiles = FileIO::CleanDirectoryOfFileContents(directory, filesRemoved, foundDirectories);
+
+      if (cleanAllFiles.HasFailed()) {
+         report = {"Failed to remove files from " +  directory};
+         noFailures = false;
+      } 
+     
+
+       while (foundDirectories.size() > 0){
+          auto result = CleanDirectory(foundDirectories.back(), true);
+          foundDirectories.pop_back();
+
+          if (result.HasFailed()) {
+             noFailures = false;
+             report.append("\n").append(result.error);
+          }
+       }
+
+       // no content should exist at this point. Safe to remove the directory
+       if (removeDirectory) {
+          auto result = FileIO::RemoveEmptyDirectories({{directory}});
+          if (result.HasFailed()){
+             noFailures = false;
+             report.append("\n").append(result.error);
+          }
+       }
+    
+      return Result<bool> {noFailures, report};
+   s}
    
 
 /**
