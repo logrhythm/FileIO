@@ -289,7 +289,7 @@ namespace FileIO {
        }
     
       return Result<bool> {noFailures, report};
-   s}
+   }
    
 
 /**
