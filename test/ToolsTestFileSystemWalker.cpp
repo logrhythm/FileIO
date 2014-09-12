@@ -1,7 +1,6 @@
 #include "ToolsTestFileSystemWalker.h"
 #include "FileSystemWalker.h"
 #include "Result.h"
-#include <g2log.hpp>
 #include <vector>
 #include <string>
 #include <algorithm>
@@ -32,16 +31,12 @@ namespace {
                ignored = true;
                ++ignoredCounter;
 
-               LOG(DEBUG) << "ignoring: " << std::string {
-                  ptr->fts_name
-               };
+               std::cout << "ignoring: " << std::string {ptr->fts_name}<< std::endl;
          }
 
          if (!ignored) {
 
-            LOG(DEBUG) << "found: " << std::string {
-               ptr->fts_name
-            };
+            std::cout << "found: " << std::string {ptr->fts_name}<< std::endl;
             names.push_back(std::string{ptr->fts_name});
             rootNames.push_back(std::string{ptr->fts_path});
          }
@@ -135,7 +130,7 @@ void ToolsTestFileSystemWalker::ThreeDirectoriesThreeFiles() {
    ASSERT_EQ(helper.rootNames.size(), helper.names.size());
    EXPECT_EQ(helper.names.size(), 7); // 3files, 3 directories, + starting directory
    for(size_t index = 0; index < helper.names.size(); ++index) {
-     LOG(DEBUG) << "[path][entity_name]: [" << helper.rootNames[index] << "][" << helper.names[index] <<"]";
+     std::cout << "[path][entity_name]: [" << helper.rootNames[index] << "][" << helper.names[index] <<"]" << std::endl;
    }
 
    

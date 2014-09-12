@@ -10,7 +10,6 @@
 #include <functional>
 #include <algorithm>
 #include <boost/filesystem.hpp>
-#include <g2log.hpp>
 #include <future>
 #include <thread>
 #include <random>
@@ -287,8 +286,7 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__ThreadSafeMoveOfFiles) {
    stat(newStorage.c_str(), &stat_path2);
    if (stat_path1.st_dev == stat_path2.st_dev) {
       std::string warning = "SKIPPING TEST. CANNOT RUN TEST FOR VERIFYING MOVE OF FILES ACROSS DEVICES";
-      std::cout << warning << std::endl;
-      LOG(WARNING) << warning;
+      std::cerr << "WARNING: " << warning << std::endl;
       SUCCEED() << warning;
       return;
    } 
@@ -374,8 +372,7 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__LargeFileCanBeMovedAcrossDevices) {
    stat(newStorage.c_str(), &stat_path2);
    if (stat_path1.st_dev == stat_path2.st_dev) {
       std::string warning = "SKIPPING TEST. CANNOT RUN TEST FOR VERIFYING MOVE OF FILES ACROSS DEVICES";
-      std::cout <<  warning << std::endl;
-      LOG(WARNING) << warning;
+      std::cerr << "WARNING: " << warning << std::endl;
       SUCCEED() << warning;
    } else {
       
@@ -577,7 +574,7 @@ TEST_F(TestFileIO, AThousandFiles) {
    }
 
    ASSERT_EQ(files.size(), 1000);
-   LOG(INFO) << "Time to find 1000 files and save them took: " << timeToFind.ElapsedUs() << " us";
+   std::cout << "Time to find 1000 files and save them took: " << timeToFind.ElapsedUs() << " us" << std::endl;
 
    std::sort(files.begin(), files.end(), [](const std::string& lh, const std::string & rh) {
       return std::stoul(lh) < std::stoul(rh);
@@ -757,7 +754,7 @@ TEST_F(TestFileIO, DISABLED_System_Performance_FileIO__vs_Boost) {
    }
 
   
-   LOG(INFO) << "FileIO Time to find " << filecounter << "took: " << timeToFind.ElapsedSec() << " sec";
+   std::cout << "FileIO Time to find " << filecounter << "took: " << timeToFind.ElapsedSec() << " sec" << std::endl;
    timeToFind.Restart();
    boost::filesystem::path boostPath = path;
    boost::filesystem::directory_iterator end;
@@ -767,5 +764,5 @@ TEST_F(TestFileIO, DISABLED_System_Performance_FileIO__vs_Boost) {
          ++filecounter;
       }
    }
-   LOG(INFO)<< "Boost Time to find " << filecounter << "took: " << timeToFind.ElapsedSec() << " sec";
+   std::cout  << "Boost Time to find " << filecounter << "took: " << timeToFind.ElapsedSec() << " sec" << std::endl;
 }
