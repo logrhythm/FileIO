@@ -396,6 +396,20 @@ namespace FileIO {
       }
       return Result<bool>{true};
    }
+
+   Result<std::string> ReadAsciiFileContentAsRoot(const std::string& filename) {
+
+      std::lock_guard<std::mutex> lock(mPermissionsMutex);
+      auto previuousuid = setfsuid(-1);
+      auto previuousgid = setfsgid(-1);
+      setfsuid(0);
+      setfsgid(0);
+      auto result = ReadAsciiFileContent(filename);
+      setfsuid(previuousuid);
+      setfsgid(previuousgid);
+
+      return result;
+   }
    
    
 
