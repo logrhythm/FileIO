@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <cerrno>
 #include <cstring>
+#include <memory>
 
 namespace FileIO {
    std::mutex mPermissionsMutex;
@@ -385,11 +386,16 @@ namespace FileIO {
       std::lock_guard<std::mutex> lock(mPermissionsMutex);
       auto previuousuid = setfsuid(-1);
       auto previuousgid = setfsgid(-1);
+
+      // RAII resource cleanup; de-escalate privileges from root to previous: 
+      std::shared_ptr<void> resetPreviousPermisions(nullptr, [&](void*) {
+         setfsuid(previuousuid);
+         setfsgid(previuousgid);
+      });
+
       setfsuid(0);
       setfsgid(0);
       int rc = unlink(filename.c_str());
-      setfsuid(previuousuid);
-      setfsgid(previuousgid);
 
       if (rc == -1) {
          return Result<bool>{false, "Unable to unlink file"};
@@ -402,11 +408,16 @@ namespace FileIO {
       std::lock_guard<std::mutex> lock(mPermissionsMutex);
       auto previuousuid = setfsuid(-1);
       auto previuousgid = setfsgid(-1);
+
+      // RAII resource cleanup; de-escalate privileges from root to previous: 
+      std::shared_ptr<void> resetPreviousPermisions(nullptr, [&](void*) {
+         setfsuid(previuousuid);
+         setfsgid(previuousgid);
+      });
+
       setfsuid(0);
       setfsgid(0);
       auto result = ReadAsciiFileContent(filename);
-      setfsuid(previuousuid);
-      setfsgid(previuousgid);
 
       return result;
    }
