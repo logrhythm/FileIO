@@ -14,7 +14,7 @@
 #include <thread>
 #include <random>
 #include <sstream>
- #include <unistd.h>
+#include <unistd.h>
 #include "ToolsTestFileIO.h"
 #include "FileIO.h"
 #include "StopWatch.h"
@@ -547,6 +547,30 @@ TEST_F(TestFileIO, CleanDirectoryOfFilesAndDirectories) {
    EXPECT_FALSE(FileIO::DoesFileExist({baseDir + "/dir1/file.txt"}));
    EXPECT_FALSE(FileIO::DoesDirectoryExist(baseDir)); // BASE DIR IS REMOVED
 
+}
+
+TEST_F(TestFileIO, TestReadAsciiFileContentAsRoot) {
+
+   int previousUID = setfsuid(-1);
+   int previousGID = setfsgid(-1);
+   ASSERT_EQ(previousUID, 0);
+   ASSERT_EQ(previousGID, 0);
+
+   FileIO::SetUserFileSystemAccess("nobody");
+
+   int targetUID = setfsuid(-1);
+   int targetGID = setfsgid(-1);
+   ASSERT_NE(targetUID, 0);
+   ASSERT_NE(targetGID, 0);
+
+   //Open a common root permissioned file without root permissions.
+   auto badResult = FileIO::ReadAsciiFileContent("/etc/sysconfig/iptables");
+   ASSERT_TRUE(badResult.HasFailed());
+
+   //Open a common root permissioned file.
+   auto goodResult = FileIO::ReadAsciiFileContentAsRoot("/etc/sysconfig/iptables");
+   EXPECT_FALSE(goodResult.HasFailed());
+   EXPECT_TRUE(goodResult.result.size() > 0);
 }
 
 

@@ -36,6 +36,7 @@ namespace FileIO {
    Result<bool> RemoveEmptyDirectories(const std::vector<std::string>& fullPathDirectories);
    
    Result<bool> RemoveFileAsRoot(const std::string& filename);
+   Result<std::string> ReadAsciiFileContentAsRoot(const std::string& filename);
    bool MoveFile(const std::string& source, const std::string& dest);
    
    struct passwd* GetUserFromPasswordFile(const std::string& username);
