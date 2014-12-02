@@ -88,7 +88,7 @@ namespace FileIO {
   /**
     * Reads content of binary  file
     * @param pathToFile to read
-    * @return Result<std::vector<uint8_t>> all the content of the file, and/or an error string 
+    * @return Result<std::vector<char>> all the content of the file, and/or an error string 
     *         if something went wrong 
     */
    Result<std::vector<char>> ReadBinaryFileContent(const std::string& pathToFile) {
