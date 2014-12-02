@@ -135,6 +135,13 @@ TEST_F(TestFileIO, WriteThenReadBinaryFileContent__Convert_uint8_to_char_should_
    EXPECT_TRUE(raw == readRaw);
 }
 
+TEST_F(TestFileIO, CannotOpenBinaryFileToRead) {
+   auto fileRead = FileIO::ReadBinaryFileContent({"/xyz/*&%/x.y.z"});
+   EXPECT_TRUE(fileRead.result.empty());
+   EXPECT_FALSE(fileRead.error.empty());
+   EXPECT_TRUE(fileRead.HasFailed());
+}
+
 
 TEST_F(TestFileIO, CannotOpenFileToRead) {
    auto fileRead = FileIO::ReadAsciiFileContent({"/xyz/*&%/x.y.z"});
