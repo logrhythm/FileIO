@@ -146,7 +146,7 @@ namespace FileIO {
 /**
 * Write the serialized date to the given filename
 * @param filename
-* @param serialized
+* @param content
 * @return whether or not the write was successful
 */
    Result<bool> WriteAppendBinaryFileContent(const std::string & filename, const std::vector<char>& content) {
