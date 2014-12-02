@@ -23,10 +23,10 @@ namespace FileIO {
    void SetInterruptFlag(volatile int* interrupted = nullptr);    
    bool Interrupted();
    Result<bool> IsMountPoint(const std::string& pathToDirectory);
-   Result<std::vector<char>> ReadBinaryFileContent(const std::string& pathToFile);
+   Result<std::vector<uint8_t>> ReadBinaryFileContent(const std::string& pathToFile);
    Result<std::string> ReadAsciiFileContent(const std::string& pathToFile);
 
-   Result<bool> WriteAppendBinaryFileContent(const std::string& filename, const std::vector<char>& content);
+   Result<bool> WriteAppendBinaryFileContent(const std::string& filename, const std::vector<uint8_t>& content);
    Result<bool> WriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
    Result<bool> AppendWriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
    Result<bool> WriteFileContentInternal(const std::string& pathToFile, const std::string& content, std::ios_base::openmode mode);

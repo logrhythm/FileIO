@@ -88,15 +88,15 @@ namespace FileIO {
   /**
     * Reads content of binary  file
     * @param pathToFile to read
-    * @return Result<std::vector<char>> all the content of the file, and/or an error string 
+    * @return Result<std::vector<uint8_t>> all the content of the file, and/or an error string 
     *         if something went wrong 
     */
-   Result<std::vector<char>> ReadBinaryFileContent(const std::string& pathToFile) {
+   Result<std::vector<uint8_t>> ReadBinaryFileContent(const std::string& pathToFile) {
       std::ifstream in(pathToFile, std::ifstream::binary);
       if (!in) {
          std::string error{"Cannot read-open file: "};
          error.append(pathToFile);
-         return Result<std::vector<char>>{{}, error};
+         return Result<std::vector<uint8_t>>{{}, error};
       }
 
       std::shared_ptr<void> fileCloser(nullptr, [&](void *) { // RAII file close
@@ -115,13 +115,15 @@ namespace FileIO {
          contents.resize(end);
          in.seekg(0, std::ios::beg);
          in.read(&contents[0], contents.size());
-         return Result<std::vector<char>>{contents};
+      } else {
+         // Could not calculate with ifstream::tellg(). Is it a RAM file?
+         // Fallback solution to slower iteratator approach
+         contents.assign((std::istreambuf_iterator<char>(in)),
+         (std::istreambuf_iterator<char>()));
       }
-      // Could not calculate with ifstream::tellg(). Is it a RAM file? 
-      // Fallback solution to slower iteratator approach
-      contents.assign((std::istreambuf_iterator<char>(in)),
-              (std::istreambuf_iterator<char>()));
-      return Result<std::vector<char>>{contents};
+
+      // return copy of the read result.
+      return Result<std::vector<uint8_t>>{{contents.begin(), contents.end()}};
    }
 
 
@@ -137,7 +139,7 @@ namespace FileIO {
         return Result<std::string>{{}, result.error};
       }
 
-      std::string contents(result.result.data(), result.result.size());
+      std::string contents(reinterpret_cast<const char*> (result.result.data()), result.result.size());
       return Result<std::string>{contents};
     }
 
@@ -149,7 +151,10 @@ namespace FileIO {
 * @param content
 * @return whether or not the write was successful
 */
-   Result<bool> WriteAppendBinaryFileContent(const std::string & filename, const std::vector<char>& content) {
+   Result<bool> WriteAppendBinaryFileContent(const std::string & filename, const std::vector<uint8_t>& content) {
+      
+      static_assert(sizeof(char) == sizeof(uint8_t), "File writing assumes equal size for uint8_t and char");
+
       std::fstream outputFile;
       outputFile.open(filename.c_str(), std::fstream::out | std::fstream::binary | std::fstream::app);
       const bool openStatus = outputFile.is_open();
@@ -173,7 +178,7 @@ namespace FileIO {
       outputFile.rdbuf()->pubsetbuf(buffer, kOneMbBuffer);
       outputFile.exceptions(std::ios::failbit | std::ios::badbit); // trigger exception if error happens
       try {
-         outputFile.write(&content[0], content.size());
+         outputFile.write(reinterpret_cast<const char*>(&content[0]), content.size());
       } catch(const std::exception& e) {
         error.append(". Writing triggered exception: ").append(e.what());
         return Result<bool>{false, error};

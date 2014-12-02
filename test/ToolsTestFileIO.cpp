@@ -117,24 +117,16 @@ TEST_F(TestFileIO, WriteThenReadBinaryFileContent__Convert_uint8_to_char_should_
    // cleanup/removing the created file when exiting
    ScopedFileCleanup cleanup{filename};
 
-
-   // Copy unint8_t to char for writing to file. then later convert it back after reading
-   // the vectors should be identical
-   const std::vector<uint8_t> raw{0xde, 0xad, 0xbe, 0xef};
-   const std::vector<char> deadbeef{raw.begin(), raw.end()}; 
-
+   const std::vector<uint8_t> deadbeef{0xde, 0xad, 0xbe, 0xef};
    auto resultWrite = FileIO::WriteAppendBinaryFileContent(filename, deadbeef);
    EXPECT_FALSE(resultWrite.HasFailed());
+
    auto resultRead = FileIO::ReadBinaryFileContent(filename);
    EXPECT_FALSE(resultRead.HasFailed());
+   
    // size and content compared: http://en.cppreference.com/w/cpp/container/vector/operator_cmp
    bool equalCharVectors =  (deadbeef == resultRead.result); 
    EXPECT_TRUE(equalCharVectors) << "deadbeef.size(): " << deadbeef.size() << ", resultRead.size(): " << resultRead.result.size();
-
-   // convert back char vector to uint8_t vector and compare
-   const std::vector<uint8_t> readRaw{resultRead.result.begin(), resultRead.result.end()};
-   bool equalUtf8Vectors = (raw == readRaw); // compares both size and content
-   EXPECT_TRUE(equalUtf8Vectors) << "raw.size(): " << raw.size() << ", readRaw.size(): " << readRaw.size();
 }
 
 TEST_F(TestFileIO, CannotOpenBinaryFileToRead) {
