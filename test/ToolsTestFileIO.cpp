@@ -107,10 +107,27 @@ TEST_F(TestFileIO, TestOfTestUtility) {
    EXPECT_FALSE(FileIO::DoesFileExist(file1));  
 }
 
-TEST_F(TestFileIO, ReadBinaryFileContent){
-  
+TEST_F(TestFileIO, WriteThenReadBinaryFileContent){
+      using namespace std;
 
+   string filename{"/tmp/TestFileIO_"};
+   filename.append(to_string(random_int(0, 1000000)))
+           .append({"_"})
+   .append(to_string(random_int(0, 1000000)));
+
+   // cleanup/removing the created file when exiting
+   ScopedFileCleanup cleanup{filename};
+
+
+   const std::vector<char> deadbeef{ 0xde, 0xad, 0xbe, 0xef};
+   auto resultWrite = FileIO::WriteAppendBinaryFileContent(filename, deadbeef);
+   EXPECT_FALSE(resultWrite.HasFailed());
+   auto resultRead = FileIO::WriteThenReadBinaryFileContent(filename);
+   EXPECT_FALSE(reasultRead.HasFailed());
+   // size and content compared: http://en.cppreference.com/w/cpp/container/vector/operator_cmp
+   EXPECT_TRUE(deadbeef == resultWrite.result); 
 }
+
 
 TEST_F(TestFileIO, CannotOpenFileToRead) {
    auto fileRead = FileIO::ReadAsciiFileContent({"/xyz/*&%/x.y.z"});

@@ -174,6 +174,48 @@ namespace FileIO {
     }
 
 
+
+/**
+* Write the serialized date to the given filename
+* @param filename
+* @param serialized
+*/
+
+   Result<bool> WriteAppendBinaryFileContent(const std::string & filename, const std::vector<char>& content) {
+      std::fstream outputFile;
+      outputFile.open(filename.c_str(), std::fstream::out | std::fstream::binary | std::fstream::app);
+      const bool openStatus = outputFile.is_open();
+      std::shared_ptr<void> fileCloser(nullptr, [&](void *) { // RAII file close
+         if (openStatus) {
+            outputFile.close();
+         }
+      }); //fileCloser RAII
+
+      std::string error = {"Unable to write test data to file: "};
+      error.append(filename);
+
+      if (!openStatus) {
+         return Result<bool> {false, error};
+      }
+
+      //  FYI: thread_local must be trivial to initialize:
+      //   http://coliru.stacked-crooked.com/view?id=6717cbf5974c0e5c
+      const static int kOneMbBuffer = 1024 * 1024;
+      thread_local char buffer[kOneMbBuffer];
+      outputFile.rdbuf()->pubsetbuf(buffer, kOneMbBuffer);
+      outputFile.exceptions(std::ios::failbit | std::ios::badbit); // trigger exception if error happens
+      try {
+         outputFile.write(&content[0], content.size());
+      } catch(const std::exception& e) {
+        error.append(". Writing triggered exception: ").append(e.what());
+        return Result<bool>{false, error};
+      }
+
+      return Result<bool>{true};
+   }
+
+
+
    /**
     * A generic write function that supports a variety of modes
     * @param pathToFile
