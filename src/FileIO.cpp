@@ -85,42 +85,6 @@ namespace FileIO {
       return Result<bool>{true};
    }
 
-// bool InvertedIndexFile::LoadSerializedData(const std::string& filename, DataSerialized& rawData) {
-//    rawData.clear();
-//    bool readResult(false);
-
-//    std::ifstream is(filename.c_str(), std::ifstream::binary);
-//    if (is) {
-//       char * buffer = nullptr;
-//       std::shared_ptr<void> cleanup(nullptr, [&](void*) { // RAII file close; free allocated memory
-//          if (is) {
-//             is.close();
-//          }
-//          if (buffer != nullptr) {
-//             delete[] buffer;
-//             buffer = nullptr;
-//          }
-//       }); // cleanup RAII
-
-//       // get length of the file
-//       is.seekg(0, is.end);
-//       int length = is.tellg();
-//       is.seekg(0, is.beg);
-
-//       buffer = new char[length];
-
-//       // read data as a block
-//       is.read(buffer,length);
-//       if (is) {
-//          readResult = true;
-//          rawData.resize(length);
-//          rawData.assign(buffer, buffer + length);
-//       }
-//    }
-
-//    return readResult;
-// }
-
       /**
     * Reads content of binary  file
     * @param pathToFile to read
@@ -216,7 +180,7 @@ namespace FileIO {
 
 
 
-   /**
+   /** 
     * A generic write function that supports a variety of modes
     * @param pathToFile
     * @param content

@@ -25,11 +25,12 @@ namespace FileIO {
    Result<bool> IsMountPoint(const std::string& pathToDirectory);
    Result<std::vector<char>> ReadBinaryFileContent(const std::string& pathToFile);
    Result<std::string> ReadAsciiFileContent(const std::string& pathToFile);
+
+   Result<bool> WriteAppendBinaryFileContent(const std::string& filename, const std::vector<char>& content);
    Result<bool> WriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
    Result<bool> AppendWriteAsciiFileContent(const std::string& pathToFile, const std::string& content);
-
-   Result<bool> WriteAppendBinaryFileContent(const std::string& filename, const std::vector<char>& content); 
    Result<bool> WriteFileContentInternal(const std::string& pathToFile, const std::string& content, std::ios_base::openmode mode);
+
    Result<bool> ChangeFileOrDirOwnershipToUser(const std::string& path, const std::string& username);
    bool DoesFileExist(const std::string& pathToFile);
    bool DoesDirectoryExist(const std::string& pathToDirectory);

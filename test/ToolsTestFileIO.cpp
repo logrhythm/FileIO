@@ -107,25 +107,32 @@ TEST_F(TestFileIO, TestOfTestUtility) {
    EXPECT_FALSE(FileIO::DoesFileExist(file1));  
 }
 
-TEST_F(TestFileIO, WriteThenReadBinaryFileContent){
+TEST_F(TestFileIO, WriteThenReadBinaryFileContent__Convert_uint8_to_char_should_work_fine){
       using namespace std;
 
    string filename{"/tmp/TestFileIO_"};
    filename.append(to_string(random_int(0, 1000000)))
-           .append({"_"})
-   .append(to_string(random_int(0, 1000000)));
+     .append({"_"}).append(to_string(random_int(0, 1000000)));
 
    // cleanup/removing the created file when exiting
    ScopedFileCleanup cleanup{filename};
 
 
-   const std::vector<char> deadbeef{ 0xde, 0xad, 0xbe, 0xef};
+   // Copy unint8_t to char for writing to file. then later convert it back after reading
+   // the vectors should be identical
+   const std::vector<uint8_t> raw{0xde, 0xad, 0xbe, 0xef};
+   const std::vector<char> deadbeef{raw.begin(), raw.end()}; 
+
    auto resultWrite = FileIO::WriteAppendBinaryFileContent(filename, deadbeef);
    EXPECT_FALSE(resultWrite.HasFailed());
-   auto resultRead = FileIO::WriteThenReadBinaryFileContent(filename);
-   EXPECT_FALSE(reasultRead.HasFailed());
+   auto resultRead = FileIO::ReadBinaryFileContent(filename);
+   EXPECT_FALSE(resultRead.HasFailed());
    // size and content compared: http://en.cppreference.com/w/cpp/container/vector/operator_cmp
-   EXPECT_TRUE(deadbeef == resultWrite.result); 
+   EXPECT_TRUE(deadbeef == resultRead.result); 
+
+   // convert back char vector to uint8_t vector and compare
+   const std::vector<uint8_t> readRaw{resultRead.result.begin(), resultRead.result.end()};
+   EXPECT_TRUE(raw == readRaw);
 }
 
 
