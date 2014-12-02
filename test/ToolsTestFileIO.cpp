@@ -107,6 +107,36 @@ TEST_F(TestFileIO, TestOfTestUtility) {
    EXPECT_FALSE(FileIO::DoesFileExist(file1));  
 }
 
+TEST_F(TestFileIO, WriteThenReadBinaryFileContent__Convert_uint8_to_char_should_work_fine){
+      using namespace std;
+
+   string filename{"/tmp/TestFileIO_"};
+   filename.append(to_string(random_int(0, 1000000)))
+     .append({"_"}).append(to_string(random_int(0, 1000000)));
+
+   // cleanup/removing the created file when exiting
+   ScopedFileCleanup cleanup{filename};
+
+   const std::vector<uint8_t> deadbeef{0xde, 0xad, 0xbe, 0xef};
+   auto resultWrite = FileIO::WriteAppendBinaryFileContent(filename, deadbeef);
+   EXPECT_FALSE(resultWrite.HasFailed());
+
+   auto resultRead = FileIO::ReadBinaryFileContent(filename);
+   EXPECT_FALSE(resultRead.HasFailed());
+   
+   // size and content compared: http://en.cppreference.com/w/cpp/container/vector/operator_cmp
+   bool equalCharVectors =  (deadbeef == resultRead.result); 
+   EXPECT_TRUE(equalCharVectors) << "deadbeef.size(): " << deadbeef.size() << ", resultRead.size(): " << resultRead.result.size();
+}
+
+TEST_F(TestFileIO, CannotOpenBinaryFileToRead) {
+   auto fileRead = FileIO::ReadBinaryFileContent({"/xyz/*&%/x.y.z"});
+   EXPECT_TRUE(fileRead.result.empty());
+   EXPECT_FALSE(fileRead.error.empty());
+   EXPECT_TRUE(fileRead.HasFailed());
+}
+
+
 TEST_F(TestFileIO, CannotOpenFileToRead) {
    auto fileRead = FileIO::ReadAsciiFileContent({"/xyz/*&%/x.y.z"});
    EXPECT_TRUE(fileRead.result.empty());
