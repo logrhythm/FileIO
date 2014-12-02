@@ -107,6 +107,11 @@ TEST_F(TestFileIO, TestOfTestUtility) {
    EXPECT_FALSE(FileIO::DoesFileExist(file1));  
 }
 
+TEST_F(TestFileIO, ReadBinaryFileContent){
+  
+
+}
+
 TEST_F(TestFileIO, CannotOpenFileToRead) {
    auto fileRead = FileIO::ReadAsciiFileContent({"/xyz/*&%/x.y.z"});
    EXPECT_TRUE(fileRead.result.empty());

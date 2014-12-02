@@ -19,7 +19,7 @@ cd ~/rpmbuild
 rpmbuild -v -bb --target=x86_64 ~/rpmbuild/SPECS/$PACKAGE.spec
 
 # Copy the artifacts to the local distribution directory
-rm -rf $DISTDIR
+#rm -rf $DISTDIR
 mkdir -p $DISTDIR/include/
 cp -r ~/rpmbuild/BUILD/$PACKAGE/src/*.h $DISTDIR/include
 mkdir -p $DISTDIR/lib/

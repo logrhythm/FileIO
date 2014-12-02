@@ -85,7 +85,78 @@ namespace FileIO {
       return Result<bool>{true};
    }
 
-   
+// bool InvertedIndexFile::LoadSerializedData(const std::string& filename, DataSerialized& rawData) {
+//    rawData.clear();
+//    bool readResult(false);
+
+//    std::ifstream is(filename.c_str(), std::ifstream::binary);
+//    if (is) {
+//       char * buffer = nullptr;
+//       std::shared_ptr<void> cleanup(nullptr, [&](void*) { // RAII file close; free allocated memory
+//          if (is) {
+//             is.close();
+//          }
+//          if (buffer != nullptr) {
+//             delete[] buffer;
+//             buffer = nullptr;
+//          }
+//       }); // cleanup RAII
+
+//       // get length of the file
+//       is.seekg(0, is.end);
+//       int length = is.tellg();
+//       is.seekg(0, is.beg);
+
+//       buffer = new char[length];
+
+//       // read data as a block
+//       is.read(buffer,length);
+//       if (is) {
+//          readResult = true;
+//          rawData.resize(length);
+//          rawData.assign(buffer, buffer + length);
+//       }
+//    }
+
+//    return readResult;
+// }
+
+      /**
+    * Reads content of binary  file
+    * @param pathToFile to read
+    * @return Result<std::vector<uint8_t>> all the content of the file, and/or an error string 
+    *         if something went wrong 
+    */
+   Result<std::vector<char>> ReadBinaryFileContent(const std::string& pathToFile) {
+      std::ifstream in(pathToFile, std::ifstream::binary);
+      if (!in) {
+         std::string error{"Cannot read-open file: "};
+         error.append(pathToFile);
+         return Result<std::vector<char>>{{}, error};
+      }
+
+      std::vector<char> contents;
+      in.seekg(0, std::ios::end);
+      auto end = in.tellg();
+
+      // Attempt to read it the fastest way possible.
+      // tellg() --> pos_type{-1} if reading the end failed.
+      if (-1 != end) {
+         contents.resize(end);
+         in.seekg(0, std::ios::beg);
+         in.read(&contents[0], contents.size());
+         in.close();
+         return Result<std::vector<char>>{contents};
+      }
+      // Could not calculate with ifstream::tellg(). Is it a RAM file? 
+      // Fallback solution to slower iteratator approach
+      contents.assign((std::istreambuf_iterator<char>(in)),
+              (std::istreambuf_iterator<char>()));
+      in.close();
+      return Result<std::vector<char>>{contents};
+   }
+
+
    /**
     * Reads content of Ascii file
     * @param pathToFile to read
@@ -93,34 +164,15 @@ namespace FileIO {
     *         if something went wrong 
     */
    Result<std::string> ReadAsciiFileContent(const std::string& pathToFile) {
-      std::ifstream in(pathToFile, std::ios::in);
-      if (!in) {
-         std::string error{"Cannot read-open file: "};
-         error.append(pathToFile);
-         return Result<std::string>{
-            {}, error
-         };
+      auto result = ReadBinaryFileContent(pathToFile);
+      if(result.HasFailed()) {
+        return Result<std::string>{{}, result.error};
       }
 
-      std::string contents;
-      in.seekg(0, std::ios::end);
-      auto end = in.tellg();
-
-      // Attempt to read it the fastest way possible
-      if (-1 != end) {
-         contents.resize(end);
-         in.seekg(0, std::ios::beg);
-         in.read(&contents[0], contents.size());
-         in.close();
-         return Result<std::string>{contents};
-      }
-      // Could not calculate with ifstream::tellg(). Is it a RAM file? 
-      // Fallback solution to slower iteratator approach
-      contents.assign((std::istreambuf_iterator<char>(in)),
-              (std::istreambuf_iterator<char>()));
-      in.close();
+      std::string contents(result.result.data(), result.result.size());
       return Result<std::string>{contents};
-   }
+    }
+
 
    /**
     * A generic write function that supports a variety of modes
