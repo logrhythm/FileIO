@@ -31,12 +31,12 @@ namespace {
                ignored = true;
                ++ignoredCounter;
 
-               std::cout << "ignoring: " << std::string {ptr->fts_name}<< std::endl;
+               //std::cout << "ignoring: " << std::string {ptr->fts_name}<< std::endl;
          }
 
          if (!ignored) {
 
-            std::cout << "found: " << std::string {ptr->fts_name}<< std::endl;
+            //std::cout << "found: " << std::string {ptr->fts_name}<< std::endl;
             names.push_back(std::string{ptr->fts_name});
             rootNames.push_back(std::string{ptr->fts_path});
          }
@@ -129,9 +129,11 @@ void ToolsTestFileSystemWalker::ThreeDirectoriesThreeFiles() {
    
    ASSERT_EQ(helper.rootNames.size(), helper.names.size());
    EXPECT_EQ(helper.names.size(), 7); // 3files, 3 directories, + starting directory
-   for(size_t index = 0; index < helper.names.size(); ++index) {
-     std::cout << "[path][entity_name]: [" << helper.rootNames[index] << "][" << helper.names[index] <<"]" << std::endl;
-   }
+   // ---- commented out but kept:  This is extremely helpful information 
+   // ---- in case we need to change the FileSystemWalker 
+   //for(size_t index = 0; index < helper.names.size(); ++index) {
+   //  std::cout << "[path][entity_name]: [" << helper.rootNames[index] << "][" << helper.names[index] <<"]" << std::endl;
+   //}
 
    
    EXPECT_EQ(helper.fileCounter, 3);
