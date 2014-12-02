@@ -128,11 +128,13 @@ TEST_F(TestFileIO, WriteThenReadBinaryFileContent__Convert_uint8_to_char_should_
    auto resultRead = FileIO::ReadBinaryFileContent(filename);
    EXPECT_FALSE(resultRead.HasFailed());
    // size and content compared: http://en.cppreference.com/w/cpp/container/vector/operator_cmp
-   EXPECT_TRUE(deadbeef == resultRead.result); 
+   bool equalCharVectors =  (deadbeef == resultRead.result); 
+   EXPECT_TRUE(equalCharVectors) << "deadbeef.size(): " << deadbeef.size() << ", resultRead.size(): " << resultRead.result.size();
 
    // convert back char vector to uint8_t vector and compare
    const std::vector<uint8_t> readRaw{resultRead.result.begin(), resultRead.result.end()};
-   EXPECT_TRUE(raw == readRaw);
+   bool equalUtf8Vectors = (raw == readRaw); // compares both size and content
+   EXPECT_TRUE(equalUtf8Vectors) << "raw.size(): " << raw.size() << ", readRaw.size(): " << readRaw.size();
 }
 
 TEST_F(TestFileIO, CannotOpenBinaryFileToRead) {

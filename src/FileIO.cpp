@@ -85,7 +85,7 @@ namespace FileIO {
       return Result<bool>{true};
    }
 
-      /**
+  /**
     * Reads content of binary  file
     * @param pathToFile to read
     * @return Result<std::vector<uint8_t>> all the content of the file, and/or an error string 
@@ -104,8 +104,7 @@ namespace FileIO {
       auto end = in.tellg();
 
       // Attempt to read it the fastest way possible.
-      // tellg() --> pos_type{-1} if reading the end failed.
-      if (-1 != end) {
+      if (-1 != end) {  // tellg() --> pos_type{-1} if reading the end failed.
          contents.resize(end);
          in.seekg(0, std::ios::beg);
          in.read(&contents[0], contents.size());
@@ -143,8 +142,8 @@ namespace FileIO {
 * Write the serialized date to the given filename
 * @param filename
 * @param serialized
+* @return whether or not the write was successful
 */
-
    Result<bool> WriteAppendBinaryFileContent(const std::string & filename, const std::vector<char>& content) {
       std::fstream outputFile;
       outputFile.open(filename.c_str(), std::fstream::out | std::fstream::binary | std::fstream::app);
