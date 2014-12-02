@@ -77,11 +77,11 @@ enable_testing(true)
 # and this: http://stackoverflow.com/questions/2257464/google-test-and-visual-studio-2010-rc
 include_directories(test)
 file(GLOB TEST_SRC_FILES "test/*.cpp")
-
+find_library(boost_filesystem boost_system)
   add_executable(UnitTestRunner 3rdparty/test_main.cpp ${TEST_SRC_FILES} )
   set_target_properties(${test} PROPERTIES COMPILE_DEFINITIONS "GTEST_HAS_TR1_TUPLE=0")
   set_target_properties(${test} PROPERTIES COMPILE_DEFINITIONS "GTEST_HAS_RTTI=0")
 IF( NOT(MSVC))
   set_target_properties(${test} PROPERTIES COMPILE_FLAGS "-isystem -pthread ")
 ENDIF( NOT(MSVC))
-target_link_libraries(UnitTestRunner FileIO StopWatch lib_g2log gtest_170_lib -lstdc++ -ltcmalloc ${PLATFORM_LINK_LIBRIES} -Wl,-rpath,. -Wl,-rpath,/usr/local/probe/lib  -Wl,-rpath,/usr/local/probe/lib64 )
+target_link_libraries(UnitTestRunner FileIO StopWatch  boost_filesystem boost_system gtest_170_lib -lstdc++ -ltcmalloc ${PLATFORM_LINK_LIBRIES} -Wl,-rpath,. -Wl,-rpath,/usr/local/probe/lib  -Wl,-rpath,/usr/local/probe/lib64 )
