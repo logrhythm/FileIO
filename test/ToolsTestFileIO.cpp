@@ -410,11 +410,8 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__LargeFileCanBeMovedAcrossDevices) {
       // Move it to the other device
       std::string movedFile1_3GBFile = {newStorage + "/moved3GBFile"};
       ScopedFileCleanup fileNewCleaner(movedFile1_3GBFile);
-      
-      std::cout << "\tStart moving file: " << file1_3GBPath << "  to " << movedFile1_3GBFile << std::endl;
-      StopWatch watch;
+   
       auto moved = FileIO::MoveFile(file1_3GBPath, movedFile1_3GBFile);
-      std::cout << "\tMoving file: " << file1_3GBPath << "  to " << movedFile1_3GBFile << ", took: " << float(watch.ElapsedMs())/1000 << " sec" << std::endl;
       EXPECT_TRUE(moved) << "std::strerror(errno): " << std::strerror(errno) 
               << "\n file1: " << file1_3GBPath << ":" << FileIO::DoesFileExist(file1_3GBPath) 
               << "\n file2: " << movedFile1_3GBFile << ":" << FileIO::DoesFileExist(movedFile1_3GBFile);
@@ -588,7 +585,6 @@ TEST_F(TestFileIO, AThousandFiles) {
    DirectoryReader::Entry entry;
 
    DirectoryReader reader(mTestDirectory);
-   StopWatch timeToFind;
    entry = reader.Next();
    while (entry.first != FileType::End) {
       ASSERT_NE(entry.first, FileType::Directory);
@@ -598,7 +594,6 @@ TEST_F(TestFileIO, AThousandFiles) {
    }
 
    ASSERT_EQ(files.size(), 1000);
-   std::cout << "Time to find 1000 files and save them took: " << timeToFind.ElapsedUs() << " us" << std::endl;
 
    std::sort(files.begin(), files.end(), [](const std::string& lh, const std::string & rh) {
       return std::stoul(lh) < std::stoul(rh);
@@ -685,7 +680,7 @@ TEST_F(TestFileIO, DirectoryReader_HasFilesInDirectory__AfterReset) {
          filename = fileAndType.second;
          fileAndType = reader.Next();
       } else { 
-         std::cout << "got unknown result" << fileAndType.second << std::endl;
+         // ignored,. "unknown result", can if wanted be printed out by: "fileAndType.second"
       }
    }
 
