@@ -99,6 +99,13 @@ namespace FileIO {
          return Result<std::vector<char>>{{}, error};
       }
 
+      std::shared_ptr<void> fileCloser(nullptr, [&](void *) { // RAII file close
+         if (in) {
+            in.close();
+         }
+      }); //fileCloser RAII
+
+
       std::vector<char> contents;
       in.seekg(0, std::ios::end);
       auto end = in.tellg();
@@ -108,14 +115,12 @@ namespace FileIO {
          contents.resize(end);
          in.seekg(0, std::ios::beg);
          in.read(&contents[0], contents.size());
-         in.close();
          return Result<std::vector<char>>{contents};
       }
       // Could not calculate with ifstream::tellg(). Is it a RAM file? 
       // Fallback solution to slower iteratator approach
       contents.assign((std::istreambuf_iterator<char>(in)),
               (std::istreambuf_iterator<char>()));
-      in.close();
       return Result<std::vector<char>>{contents};
    }
 
@@ -194,8 +199,13 @@ namespace FileIO {
          return Result<bool>{false, error};
       }
 
+      std::shared_ptr<void> fileCloser(nullptr, [&](void *) { // RAII file close
+         if (out) {
+            out.close();
+         }
+      }); //fileCloser RAII
+
       out << content;
-      out.close();
       return Result<bool>{true};
    }
 
