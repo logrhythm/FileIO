@@ -189,6 +189,22 @@ namespace FileIO {
       return isDirectory;
    }
 
+   /**
+    * Use to determine if the directory is empty or not
+    * @param pathToDirectory
+    * @return true if the directory is not empty, false otherwise
+    */
+   bool DoesDirectoryHaveContent(const std::string& pathToDirectory) {
+
+      if (false == FileIO::DoesDirectoryExist(pathToDirectory)) {
+         return false;
+      }
+
+      FileIO::DirectoryReader reader(pathToDirectory);
+      auto entry = reader.Next();
+      return (FileIO::FileType::End != entry.first);
+   }
+
    
    
 /**
