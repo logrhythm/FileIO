@@ -10,7 +10,6 @@
 #include <functional>
 #include <algorithm>
 #include <boost/filesystem.hpp>
-#include <g2log.hpp>
 #include <future>
 #include <thread>
 #include <random>
@@ -107,6 +106,36 @@ TEST_F(TestFileIO, TestOfTestUtility) {
    }
    EXPECT_FALSE(FileIO::DoesFileExist(file1));  
 }
+
+TEST_F(TestFileIO, WriteThenReadBinaryFileContent__Convert_uint8_to_char_should_work_fine){
+      using namespace std;
+
+   string filename{"/tmp/TestFileIO_"};
+   filename.append(to_string(random_int(0, 1000000)))
+     .append({"_"}).append(to_string(random_int(0, 1000000)));
+
+   // cleanup/removing the created file when exiting
+   ScopedFileCleanup cleanup{filename};
+
+   const std::vector<uint8_t> deadbeef{0xde, 0xad, 0xbe, 0xef};
+   auto resultWrite = FileIO::WriteAppendBinaryFileContent(filename, deadbeef);
+   EXPECT_FALSE(resultWrite.HasFailed());
+
+   auto resultRead = FileIO::ReadBinaryFileContent(filename);
+   EXPECT_FALSE(resultRead.HasFailed());
+   
+   // size and content compared: http://en.cppreference.com/w/cpp/container/vector/operator_cmp
+   bool equalCharVectors =  (deadbeef == resultRead.result); 
+   EXPECT_TRUE(equalCharVectors) << "deadbeef.size(): " << deadbeef.size() << ", resultRead.size(): " << resultRead.result.size();
+}
+
+TEST_F(TestFileIO, CannotOpenBinaryFileToRead) {
+   auto fileRead = FileIO::ReadBinaryFileContent({"/xyz/*&%/x.y.z"});
+   EXPECT_TRUE(fileRead.result.empty());
+   EXPECT_FALSE(fileRead.error.empty());
+   EXPECT_TRUE(fileRead.HasFailed());
+}
+
 
 TEST_F(TestFileIO, CannotOpenFileToRead) {
    auto fileRead = FileIO::ReadAsciiFileContent({"/xyz/*&%/x.y.z"});
@@ -316,8 +345,7 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__ThreadSafeMoveOfFiles) {
    stat(newStorage.c_str(), &stat_path2);
    if (stat_path1.st_dev == stat_path2.st_dev) {
       std::string warning = "SKIPPING TEST. CANNOT RUN TEST FOR VERIFYING MOVE OF FILES ACROSS DEVICES";
-      std::cout << warning << std::endl;
-      LOG(WARNING) << warning;
+      std::cerr << "WARNING: " << warning << std::endl;
       SUCCEED() << warning;
       return;
    } 
@@ -403,8 +431,7 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__LargeFileCanBeMovedAcrossDevices) {
    stat(newStorage.c_str(), &stat_path2);
    if (stat_path1.st_dev == stat_path2.st_dev) {
       std::string warning = "SKIPPING TEST. CANNOT RUN TEST FOR VERIFYING MOVE OF FILES ACROSS DEVICES";
-      std::cout <<  warning << std::endl;
-      LOG(WARNING) << warning;
+      std::cerr << "WARNING: " << warning << std::endl;
       SUCCEED() << warning;
    } else {
       
@@ -442,11 +469,8 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__LargeFileCanBeMovedAcrossDevices) {
       // Move it to the other device
       std::string movedFile1_3GBFile = {newStorage + "/moved3GBFile"};
       ScopedFileCleanup fileNewCleaner(movedFile1_3GBFile);
-      
-      std::cout << "\tStart moving file: " << file1_3GBPath << "  to " << movedFile1_3GBFile << std::endl;
-      StopWatch watch;
+   
       auto moved = FileIO::MoveFile(file1_3GBPath, movedFile1_3GBFile);
-      std::cout << "\tMoving file: " << file1_3GBPath << "  to " << movedFile1_3GBFile << ", took: " << float(watch.ElapsedMs())/1000 << " sec" << std::endl;
       EXPECT_TRUE(moved) << "std::strerror(errno): " << std::strerror(errno) 
               << "\n file1: " << file1_3GBPath << ":" << FileIO::DoesFileExist(file1_3GBPath) 
               << "\n file2: " << movedFile1_3GBFile << ":" << FileIO::DoesFileExist(movedFile1_3GBFile);
@@ -620,7 +644,6 @@ TEST_F(TestFileIO, AThousandFiles) {
    DirectoryReader::Entry entry;
 
    DirectoryReader reader(mTestDirectory);
-   StopWatch timeToFind;
    entry = reader.Next();
    while (entry.first != FileType::End) {
       ASSERT_NE(entry.first, FileType::Directory);
@@ -630,7 +653,6 @@ TEST_F(TestFileIO, AThousandFiles) {
    }
 
    ASSERT_EQ(files.size(), 1000);
-   LOG(INFO) << "Time to find 1000 files and save them took: " << timeToFind.ElapsedUs() << " us";
 
    std::sort(files.begin(), files.end(), [](const std::string& lh, const std::string & rh) {
       return std::stoul(lh) < std::stoul(rh);
@@ -717,7 +739,7 @@ TEST_F(TestFileIO, DirectoryReader_HasFilesInDirectory__AfterReset) {
          filename = fileAndType.second;
          fileAndType = reader.Next();
       } else { 
-         std::cout << "got unknown result" << fileAndType.second << std::endl;
+         // ignored,. "unknown result", can if wanted be printed out by: "fileAndType.second"
       }
    }
 
@@ -810,7 +832,7 @@ TEST_F(TestFileIO, DISABLED_System_Performance_FileIO__vs_Boost) {
    }
 
   
-   LOG(INFO) << "FileIO Time to find " << filecounter << "took: " << timeToFind.ElapsedSec() << " sec";
+   std::cout << "FileIO Time to find " << filecounter << "took: " << timeToFind.ElapsedSec() << " sec" << std::endl;
    timeToFind.Restart();
    boost::filesystem::path boostPath = path;
    boost::filesystem::directory_iterator end;
@@ -820,5 +842,5 @@ TEST_F(TestFileIO, DISABLED_System_Performance_FileIO__vs_Boost) {
          ++filecounter;
       }
    }
-   LOG(INFO)<< "Boost Time to find " << filecounter << "took: " << timeToFind.ElapsedSec() << " sec";
+   std::cout  << "Boost Time to find " << filecounter << "took: " << timeToFind.ElapsedSec() << " sec" << std::endl;
 }

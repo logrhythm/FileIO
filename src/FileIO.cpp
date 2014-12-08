@@ -85,7 +85,48 @@ namespace FileIO {
       return Result<bool>{true};
    }
 
-   
+  /**
+    * Reads content of binary  file
+    * @param pathToFile to read
+    * @return Result<std::vector<uint8_t>> all the content of the file, and/or an error string 
+    *         if something went wrong 
+    */
+   Result<std::vector<uint8_t>> ReadBinaryFileContent(const std::string& pathToFile) {
+      std::ifstream in(pathToFile, std::ifstream::binary);
+      if (!in) {
+         std::string error{"Cannot read-open file: "};
+         error.append(pathToFile);
+         return Result<std::vector<uint8_t>>{{}, error};
+      }
+
+      std::shared_ptr<void> fileCloser(nullptr, [&](void *) { // RAII file close
+         if (in) {
+            in.close();
+         }
+      }); //fileCloser RAII
+
+
+      std::vector<char> contents;
+      in.seekg(0, std::ios::end);
+      auto end = in.tellg();
+
+      // Attempt to read it the fastest way possible.
+      if (-1 != end) {  // tellg() --> pos_type{-1} if reading the end failed.
+         contents.resize(end);
+         in.seekg(0, std::ios::beg);
+         in.read(&contents[0], contents.size());
+      } else {
+         // Could not calculate with ifstream::tellg(). Is it a RAM file?
+         // Fallback solution to slower iteratator approach
+         contents.assign((std::istreambuf_iterator<char>(in)),
+         (std::istreambuf_iterator<char>()));
+      }
+
+      // return copy of the read result.
+      return Result<std::vector<uint8_t>>{{contents.begin(), contents.end()}};
+   }
+
+
    /**
     * Reads content of Ascii file
     * @param pathToFile to read
@@ -93,36 +134,62 @@ namespace FileIO {
     *         if something went wrong 
     */
    Result<std::string> ReadAsciiFileContent(const std::string& pathToFile) {
-      std::ifstream in(pathToFile, std::ios::in);
-      if (!in) {
-         std::string error{"Cannot read-open file: "};
-         error.append(pathToFile);
-         return Result<std::string>{
-            {}, error
-         };
+      auto result = ReadBinaryFileContent(pathToFile);
+      if(result.HasFailed()) {
+        return Result<std::string>{{}, result.error};
       }
 
-      std::string contents;
-      in.seekg(0, std::ios::end);
-      auto end = in.tellg();
-
-      // Attempt to read it the fastest way possible
-      if (-1 != end) {
-         contents.resize(end);
-         in.seekg(0, std::ios::beg);
-         in.read(&contents[0], contents.size());
-         in.close();
-         return Result<std::string>{contents};
-      }
-      // Could not calculate with ifstream::tellg(). Is it a RAM file? 
-      // Fallback solution to slower iteratator approach
-      contents.assign((std::istreambuf_iterator<char>(in)),
-              (std::istreambuf_iterator<char>()));
-      in.close();
+      std::string contents(reinterpret_cast<const char*> (result.result.data()), result.result.size());
       return Result<std::string>{contents};
+    }
+
+
+
+/**
+* Write the serialized date to the given filename
+* @param filename
+* @param content
+* @return whether or not the write was successful
+*/
+   Result<bool> WriteAppendBinaryFileContent(const std::string & filename, const std::vector<uint8_t>& content) {
+      
+      static_assert(sizeof(char) == sizeof(uint8_t), "File writing assumes equal size for uint8_t and char");
+
+      std::fstream outputFile;
+      outputFile.open(filename.c_str(), std::fstream::out | std::fstream::binary | std::fstream::app);
+      const bool openStatus = outputFile.is_open();
+      std::shared_ptr<void> fileCloser(nullptr, [&](void *) { // RAII file close
+         if (openStatus) {
+            outputFile.close();
+         }
+      }); //fileCloser RAII
+
+      std::string error = {"Unable to write test data to file: "};
+      error.append(filename);
+
+      if (!openStatus) {
+         return Result<bool> {false, error};
+      }
+
+      //  FYI: thread_local must be trivial to initialize:
+      //   http://coliru.stacked-crooked.com/view?id=6717cbf5974c0e5c
+      const static int kOneMbBuffer = 1024 * 1024;
+      thread_local char buffer[kOneMbBuffer];
+      outputFile.rdbuf()->pubsetbuf(buffer, kOneMbBuffer);
+      outputFile.exceptions(std::ios::failbit | std::ios::badbit); // trigger exception if error happens
+      try {
+         outputFile.write(reinterpret_cast<const char*>(&content[0]), content.size());
+      } catch(const std::exception& e) {
+        error.append(". Writing triggered exception: ").append(e.what());
+        return Result<bool>{false, error};
+      }
+
+      return Result<bool>{true};
    }
 
-   /**
+
+
+   /** 
     * A generic write function that supports a variety of modes
     * @param pathToFile
     * @param content
@@ -137,8 +204,13 @@ namespace FileIO {
          return Result<bool>{false, error};
       }
 
+      std::shared_ptr<void> fileCloser(nullptr, [&](void *) { // RAII file close
+         if (out) {
+            out.close();
+         }
+      }); //fileCloser RAII
+
       out << content;
-      out.close();
       return Result<bool>{true};
    }
 
