@@ -34,6 +34,7 @@ namespace FileIO {
    Result<bool> ChangeFileOrDirOwnershipToUser(const std::string& path, const std::string& username);
    bool DoesFileExist(const std::string& pathToFile);
    bool DoesDirectoryExist(const std::string& pathToDirectory);
+   bool DoesDirectoryHaveContent(const std::string& pathToDirectory) ;
    
    Result<bool> CleanDirectoryOfFileContents(const std::string& location, size_t& filesRemoved, std::vector<std::string>& foundDirectories);
    Result<bool> CleanDirectory(const std::string& directory, const bool removeDirectory);

@@ -219,6 +219,35 @@ TEST_F(TestFileIO, DirectoryExistance) {
    EXPECT_FALSE(FileIO::DoesDirectoryExist(directory));
 }
 
+TEST_F(TestFileIO, DirectoryIsEmpty) {
+   std::string directory{"/tmp/some_temp_directory"};
+   {
+      EXPECT_FALSE(FileIO::DoesDirectoryExist(directory)) << directory;
+      std::string createDir{"mkdir -p " + directory};
+      EXPECT_EQ(0, system(createDir.c_str()));
+
+      ScopedFileCleanup cleanup{directory};
+      EXPECT_TRUE(FileIO::DoesDirectoryExist(directory));
+      EXPECT_FALSE(FileIO::DoesDirectoryHaveContent(directory));
+   }
+}
+
+TEST_F(TestFileIO, DirectoryIsNotEmpty) {
+   std::string directory{"/tmp/some_temp_directory"};
+   {
+      EXPECT_FALSE(FileIO::DoesDirectoryExist(directory)) << directory;
+      std::string createDir{"mkdir -p " + directory};
+      EXPECT_EQ(0, system(createDir.c_str()));
+
+      ScopedFileCleanup cleanup{directory};
+      EXPECT_TRUE(FileIO::DoesDirectoryExist(directory));
+      std::string file = directory + "/fakefile.txt";
+      FileIO::WriteAsciiFileContent(file, "");
+      EXPECT_TRUE(FileIO::DoesDirectoryHaveContent(directory));
+      FileIO::RemoveFileAsRoot(file);
+   }
+}
+
 TEST_F(TestFileIO,  RemoveEmptyDirectories_FakeDirectoriesAreIgnored) {
    EXPECT_TRUE(FileIO::RemoveEmptyDirectories({}).result); // invalids are ignored
    EXPECT_TRUE(FileIO::RemoveEmptyDirectories({{""}}).result); // invalids are ignored
