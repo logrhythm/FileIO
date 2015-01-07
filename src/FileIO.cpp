@@ -344,12 +344,11 @@ namespace FileIO {
    * @param removeDirectory, whether or not the start directory should be removed
    *  @return how many entities that were not removed. I.e. a successfull remove of all would have zero entities left
    */ 
-   Result<bool> CleanDirectory(const std::string & directory, const bool removeDirectory){
+   Result<bool> CleanDirectory(const std::string & directory, const bool removeDirectory, size_t& filesRemoved){
       std::string report;
       bool noFailures = true;
 
       std::vector<std::string> foundDirectories;
-      size_t filesRemoved {0};
       auto cleanAllFiles = FileIO::CleanDirectoryOfFileContents(directory, filesRemoved, foundDirectories);
 
       if (cleanAllFiles.HasFailed()) {
@@ -380,7 +379,10 @@ namespace FileIO {
       return Result<bool> {noFailures, report};
    }
    
-
+   Result<bool> CleanDirectory(const std::string & directory, const bool removeDirectory){
+    size_t filesRemoved {0};
+    return CleanDirectory(directory, removeDirectory, filesRemoved);
+   }
 /**
     * Remove directories at the given paths
     * @return whether or not all the operations were successful

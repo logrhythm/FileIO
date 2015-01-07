@@ -56,10 +56,32 @@ bool FileSystemWalker::IsValid() const {
  * the directory tree is exhausted and there are no more entries to find
  * @result Result<int> with traversal status and any possible error messages
  *
+ * Some Useful FTSENT Flags
+ * FTS_D      A directory being visited in preorder.
+ *
+ * FTS_DC     A directory that causes a cycle in the tree.
+ *            (The fts_cycle field of the FTSENT structure
+ *            will be filled in as well.)
+ *
+ * FTS_DNR    A directory which cannot be read.  This is an
+ *            error return, and the fts_errno field will be
+ *            set to indicate what caused the error.
+ *
+ * FTS_DOT    A file named "."  or ".."  which was not
+ *            specified as a filename to fts_open() (see
+ *            FTS_SEEDOT).
+ *
+ * FTS_DP     A directory being visited in postorder.  The
+ *            contents of the FTSENT structure will be
+ *            unchanged from when it was returned in
+ *            preorder, that is, with the fts_info field
+ *            set to FTS_D.
+ *
+ * FTS_F      A regular file.
  *
  * Example usage:
    @verbatim
-  // Example of how to count all file system entities from a given path
+ // Example of how to count all file system entities from a given path
  // The saved results is saved INSIDE the given FTSENT handler
   void SomeFunc() {
     size_t entityCounter;
