@@ -212,3 +212,10 @@ TEST_F(ToolsTestFileSystemWalker, ThreeDirectoriesThreeFiles_100Threads) {
       result.get();
    }
 }
+
+
+
+// TEST_F(ToolsTestFileSystemWalker, CountFilesRecursive) {
+   
+//    size_t fileCounter = 0;
+// }

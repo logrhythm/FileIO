@@ -17,6 +17,8 @@
 #include <unistd.h>
 #include "ToolsTestFileIO.h"
 #include "FileIO.h"
+#include "DirectoryReader.h"
+#include "FileSystemWalker.h"
 #include "StopWatch.h"
 
 namespace {
@@ -825,35 +827,133 @@ TEST_F(TestFileIO, SYSTEM__Dependent_Stuff__MountPoint) {
 // Boost #files   time
 //       63,8841  3199 ms
 //       985,524  5 sec
-TEST_F(TestFileIO, DISABLED_System_Performance_FileIO__vs_Boost) {
-   using namespace FileIO;
+namespace {
 
-   DirectoryReader::Entry entry;
-
-   StopWatch timeToFind;
-
+/// FileIO::DirectoryReader, locate all entities, one level down and return how many were found
+auto DirectoryReaderFindsEntities = [](const std::string& path) {
+   FileIO::DirectoryReader reader(path);
    size_t filecounter = 0;
 
-   std::string path = {"/tmp"};
-   DirectoryReader reader(path);
-   if (false == reader.Valid().HasFailed()) {
-      reader.Next();
+   /// "Entry: <TypeOfFileSystemEntity, PathToEntity?"
+   FileIO::DirectoryReader::Entry entry;
+   if (!reader.Valid().HasFailed()) {
+      entry = reader.Next();
       while (entry.first != FileIO::FileType::End) {
          ++filecounter;
+         entry = reader.Next();
       }
-      entry = reader.Next();
    }
+   return filecounter;
+};
 
-  
-   std::cout << "FileIO Time to find " << filecounter << "took: " << timeToFind.ElapsedSec() << " sec" << std::endl;
-   timeToFind.Restart();
+
+
+
+
+
+/// Boost fileystem location of entities, one level down and return how many were found
+auto BoostFilesystemFindsEntities = [](const std::string& path) {
    boost::filesystem::path boostPath = path;
    boost::filesystem::directory_iterator end;
-   filecounter = 0;
+   size_t filecounter = 0;
    for (boost::filesystem::directory_iterator dir_iter(boostPath); dir_iter != end; ++dir_iter) {
       if (boost::filesystem::is_regular_file(dir_iter->status())) {
          ++filecounter;
       }
    }
-   std::cout  << "Boost Time to find " << filecounter << "took: " << timeToFind.ElapsedSec() << " sec" << std::endl;
+   return filecounter;
+};
+
+
+
+
+
+
+
+
+
+
+// 
+struct FileWalkerCounter {
+   size_t fileCounter;
+   size_t directoryCounter;
+   size_t ignoredCounter;
+   FileWalkerCounter() : fileCounter(0), directoryCounter(0), ignoredCounter(0) { }
+
+
+   /// Action fulfils the FTS traversal API requirements
+   /// Ref: http://man7.org/linux/man-pages/man3/fts.3.html
+   int Count(FTSENT* ptr, int flag) {
+      bool ignored = false;
+      switch (flag) {
+      case FTS_DP: ++directoryCounter;
+         break;
+      case FTS_F: ++fileCounter;
+         break;
+      default:
+         ignored = true;
+         ++ignoredCounter;      }
+      if (!ignored) {
+         // In case you wanted to act on them you could access the entity 
+         // through the FTSENT ptr
+         // Example:   std::cout path to all found entities
+          // std::cout << "found: " << std::string {ptr->fts_name} << std::endl;
+      }
+
+      // Return "zero" means continue to the next detected entity
+      // In production code you would likely need a detection of system issues
+      // (shutdown etc) that would instead cause a quick exit by returning non-zero
+      return 0;
+   }
+};
+
+auto FileSystemWalkerFindsEntities = [](const std::string& path) {
+   using namespace FileIO;
+   FileWalkerCounter fileSystemCounter;
+   auto FtsFileWalkerCounter = [&](FTSENT* ptr, int fileIDflag) {
+      return fileSystemCounter.Count(ptr, fileIDflag);
+   };
+
+   // Traverse the directory and return number of located entities
+   FileSystemWalker walker(path, FtsFileWalkerCounter);
+   StopWatch timeToFind;
+   auto success = !walker.Action().HasFailed();
+   EXPECT_TRUE(success);
+   return fileSystemCounter.fileCounter;
+};
+
+} // anonymous namespace
+
+
+
+
+
+
+
+
+
+
+
+TEST_F(TestFileIO, DISABLED_System_Performance_FileIO_DirectoryReader__vs_Boost_FileSystem) {
+   const std::string path = {"/tmp/"};
+
+   StopWatch timeToFind;
+   auto readerFileCounter = DirectoryReaderFindsEntities(path);
+   auto timeCheck = timeToFind.ElapsedMs();
+   std::cout << "FileIO::DirectoryReader found     " << readerFileCounter << " items in: " 
+       << timeCheck << " millisec" << std::endl;
+
+   timeToFind.Restart();
+   auto fileSystemWalkerCounter = FileSystemWalkerFindsEntities(path);
+   timeCheck = timeToFind.ElapsedMs();
+   std::cout  << "FileIO::FileSystemWalker found   " << fileSystemWalkerCounter << " items in: " 
+      << timeCheck << " millisec" << std::endl;
+
+   timeToFind.Restart();
+   auto boostFileCounter = BoostFilesystemFindsEntities(path);
+   timeCheck = timeToFind.ElapsedMs();
+   std::cout  << "Boost filesystem found           " << boostFileCounter << " items in: " 
+       << timeCheck << " millisec" << std::endl;
+
+
 }
