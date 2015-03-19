@@ -118,9 +118,13 @@ Result<int> FileSystemWalker::Action() {
       status = mFtsHandler(node, info);
    }
 
-   std::string error;
-   if (-1 == status) {
-      error = {"Error occurred during file access starting from: " + mStartPath + ", error: " + std::strerror(errno)};
-   }
-   return Result<int>{status, error};
+   static auto GetError = [](const int status, const std::string& path) -> std::string {
+      if (-1 == status) {
+         std::string error = {"Error occurred during file access starting from: " + path + ", error: " + std::strerror(errno)};
+         return error;
+      }
+      return {};
+   };
+   
+   return Result<int>{status, GetError(status, mStartPath)};
 }
