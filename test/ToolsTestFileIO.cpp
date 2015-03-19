@@ -556,6 +556,19 @@ TEST_F(TestFileIO, CleanDirectory__NoDirectory__ExpectFailure) {
    EXPECT_TRUE(result3.HasFailed());
 }
 
+TEST_F(TestFileIO, CleanDirectory__CountFilesDeleted) {
+   std::vector<std::string> newDirectories;
+   size_t removedFiles{0};  
+
+   EXPECT_EQ(removedFiles, 0);   
+   
+   CreateFile(mTestDirectory, "some_file1");  
+   CreateFile(mTestDirectory, "some_file2");  
+   EXPECT_TRUE(FileIO::CleanDirectory(mTestDirectory, true, removedFiles).result);
+   FileIO::SetInterruptFlag(); 
+   EXPECT_EQ(removedFiles, 2); 
+}
+
 TEST_F(TestFileIO, CleanDirectoryOfFilesAndDirectories) {
    const std::string baseDir = CreateSubDirectory("base");
    ASSERT_TRUE(FileIO::DoesDirectoryExist(baseDir));

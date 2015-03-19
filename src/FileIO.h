@@ -37,6 +37,7 @@ namespace FileIO {
    bool DoesDirectoryHaveContent(const std::string& pathToDirectory) ;
    
    Result<bool> CleanDirectoryOfFileContents(const std::string& location, size_t& filesRemoved, std::vector<std::string>& foundDirectories);
+   Result<bool> CleanDirectory(const std::string & directory, const bool removeDirectory, size_t& filesRemoved);
    Result<bool> CleanDirectory(const std::string& directory, const bool removeDirectory);
    Result<bool> RemoveEmptyDirectories(const std::vector<std::string>& fullPathDirectories);
    
