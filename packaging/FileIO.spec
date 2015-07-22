@@ -1,4 +1,4 @@
-name:          FileIO
+Name:          FileIO
 Version:       1.0
 Release:       1%{?dist}
 Summary:       An implemnetation of File IO for C++
