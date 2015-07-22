@@ -19,7 +19,6 @@ set(DIR_3RDPARTY ${FileIO_SOURCE_DIR}/3rdparty)
 MESSAGE(" PROJECT_SRC = : ${PROJECT_SRC}")
 include_directories(${PROJECT_SRC})
 SET(ACTIVE_CPP0xx_DIR "Release")
-find_library(G2LOG lib_g2log PATHS /usr/local/probe/lib )
 find_library(TCMALLOC tcmalloc PATHS /usr/local/probe/lib )
 
 #cmake -DCMAKE_CXX_COMPILER=clang++ ..

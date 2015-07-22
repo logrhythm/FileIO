@@ -10,7 +10,6 @@
 int main(int argc, char *argv[])
 {
 
-   // Start the g2log logger running
    srand(time(NULL));
    std::stringstream fileName;
    fileName << "UnitTest" << geteuid();

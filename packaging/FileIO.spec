@@ -1,10 +1,10 @@
-Name:          FileIO
+name:          FileIO
 Version:       1.0
 Release:       1%{?dist}
 Summary:       An implemnetation of File IO for C++
 Group:         Development/Tools
 License:       MIT
-BuildRequires: probecmake >= 2.8, g2log-dev
+BuildRequires: probecmake >= 2.8
 ExclusiveArch: x86_64
 
 %description
