@@ -110,11 +110,11 @@ namespace FileIO {
       std::vector<char> contents;
       in.seekg(0, std::ios::end);
       auto end = in.tellg();
+      in.seekg(0, std::ios::beg);
 
       // Attempt to read it the fastest way possible.
       if (-1 != end) {  // tellg() --> pos_type{-1} if reading the end failed.
          contents.resize(end);
-         in.seekg(0, std::ios::beg);
          in.read(&contents[0], contents.size());
       } else {
          // Could not calculate with ifstream::tellg(). Is it a RAM file?
