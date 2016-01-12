@@ -39,6 +39,11 @@ PATH=/usr/local/probe/bin:$PATH
 
 
 make -j
+
+# Run all unit tests excepts the ones that are tagged with Root at the end
+# the reason for this is that the code coverage will fail otherwise due to 
+# some root specific actions that will take place within these tests
+# It is likely a gcovr bug and the test split is a work around
 ./UnitTestRunner --gtest_filter=-*Root
 
 #run the root tests once as non-root. They will fail but will generate the .gcda files
