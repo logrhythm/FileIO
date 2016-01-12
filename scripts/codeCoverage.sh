@@ -1,9 +1,12 @@
 #!/bin/bash
 LAUNCH_DIR=`pwd`
 
-#  uncoment to enabled source blacklist: exmple --> SOURCE_BLACKLIST=".*ProbeTransmogrifier.cpp.*"
 HEADER_WHITELIST=
 
+# black listing of files can also be done
+# please see commented out execution of gcovr at the bottom
+# example: 
+#  SOURCE_BLACKLIST=".*ProbeTransmogrifier.cpp.*"
 
 
 cd 3rdparty
@@ -22,7 +25,12 @@ cd build
 
 
 # A dummy version to please cmake
-VERSION=1.1.1.1.1 
+# As version number we use the commit number on HEAD 
+# we do not bother with other branches for now
+GIT_VERSION=`git rev-list HEAD --count`
+VERSION="1.$GIT_VERSION"
+
+
 echo "Pseudo FileIO version: $VERSION"
 PATH=/usr/local/probe/bin:$PATH
 /usr/local/probe/bin/cmake -DUSE_LR_DEBUG=ON -DVERSION=$VERSION -DCMAKE_CXX_COMPILER_ARG1:STRING=' -Wall -Werror -g -gdwarf-2 -fprofile-arcs -ftest-coverage -O0 -fPIC -m64 -Wl,-rpath -Wl,. -Wl,-rpath -Wl,/usr/local/probe/lib -Wl,-rpath -Wl,/usr/local/probe/lib64 ' -DCMAKE_CXX_COMPILER=/usr/local/probe/bin/g++ ..
