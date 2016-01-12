@@ -54,7 +54,6 @@ make -j
 # files already exist we can execute the test again as root
 sudo ./UnitTestRunner --gtest_filter=*Root
 sudo chown -R $USER .
-echo $USER
 cd ..
 
 
