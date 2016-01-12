@@ -327,7 +327,7 @@ TEST_F(TestFileIO, MoveFiles__FileCanBeMovedAcrossDirectories) {
 
 
 
-TEST_F(TestFileIO, SYSTEM__MoveFiles__ThreadSafeMoveOfFiles) {
+TEST_F(TestFileIO, SYSTEM__MoveFiles__ThreadSafeMoveOfFilesShouldBeRunAsRoot) {
    std::string oldStorage = "/tmp";
    std::string newStorage = GetCurrentDirectory();
    if (false == FileIO::DoesDirectoryExist(oldStorage)) {
@@ -412,7 +412,7 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__ThreadSafeMoveOfFiles) {
 //   real    0m3.430s
 //   user    0m0.021s
 //   sys     0m3.401s
-TEST_F(TestFileIO, SYSTEM__MoveFiles__LargeFileCanBeMovedAcrossDevices) {
+TEST_F(TestFileIO, SYSTEM__MoveFiles__LargeFileCanBeMovedAcrossDevicesShouldBeRunAsRoot) {
    std::string oldStorage = "/tmp";
    std::string newStorage = GetCurrentDirectory();
    if (false == FileIO::DoesDirectoryExist(oldStorage)) {
