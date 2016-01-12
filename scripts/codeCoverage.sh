@@ -1,6 +1,8 @@
 #!/bin/bash
 LAUNCH_DIR=`pwd`
 
+# If you need to add a header to the code coverage please put it here
+# example "myfile.h myotherfile.h"
 HEADER_WHITELIST=
 
 # black listing of files can also be done
