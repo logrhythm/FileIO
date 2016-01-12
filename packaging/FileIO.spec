@@ -41,7 +41,7 @@ else
 fi
 
 make VERSION=1 -j6
-./UnitTestRunner
+sudo ./UnitTestRunner
 
 
 mkdir -p $RPM_BUILD_ROOT/usr/local/probe/lib
