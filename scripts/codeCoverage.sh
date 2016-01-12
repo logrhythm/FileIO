@@ -1,17 +1,53 @@
 #!/bin/bash
 LAUNCH_DIR=`pwd`
-COVERAGE_DIR=coverage
+
 #  uncoment to enabled source blacklist: exmple --> SOURCE_BLACKLIST=".*ProbeTransmogrifier.cpp.*"
 HEADER_WHITELIST=
 
+
+
+cd 3rdparty
+unzip -u gtest-1.7.0.zip
+cd ..
+
 #clean up coverage dir
+COVERAGE_DIR=coverage
 rm -rf $COVERAGE_DIR
 mkdir -p $COVERAGE_DIR
+
+rm -rf build
+mkdir -p build
+cd build
+
+
+
+# A dummy version to please cmake
+VERSION=1.1.1.1.1 
+echo "Pseudo FileIO version: $VERSION"
+PATH=/usr/local/probe/bin:$PATH
+/usr/local/probe/bin/cmake -DUSE_LR_DEBUG=ON -DVERSION=$VERSION -DCMAKE_CXX_COMPILER_ARG1:STRING=' -Wall -Werror -g -gdwarf-2 -fprofile-arcs -ftest-coverage -O0 -fPIC -m64 -Wl,-rpath -Wl,. -Wl,-rpath -Wl,/usr/local/probe/lib -Wl,-rpath -Wl,/usr/local/probe/lib64 ' -DCMAKE_CXX_COMPILER=/usr/local/probe/bin/g++ ..
+
+
+make -j
+./UnitTestRunner --gtest_filter=-*Root
+
+#run the root tests once as non-root. They will fail but will generate the .gcda files
+./UnitTestRunner --gtest_filter=*Root 
+
+# the bug in the code coverage for root has to do with the under the cover
+# root manipulation some FileIO code does. Now when the .gcda
+# files already exist we can execute the test again as root
+sudo ./UnitTestRunner --gtest_filter=*Root
+sudo chown -R $USER .
+echo $USER
+cd ..
+
+
 
 PROJECT="FileIO"
 OBJECT_DIR="FileIO.dir"
 #copy source cpp files and profile files to the coverage dir
-cp ~/rpmbuild/BUILD/$PROJECT/CMakeFiles/$OBJECT_DIR/src/* $COVERAGE_DIR
+cp build/CMakeFiles/$OBJECT_DIR/src/* $COVERAGE_DIR
 #convert the whitelist to a filter
 FORMATTED_HEADER_LIST=
 for header in $HEADER_WHITELIST 
@@ -33,5 +69,5 @@ PATH=/usr/local/probe/bin:$PATH
 # Uncomment/replace with the gcovr line at the bottom to enabled source blacklist
 #gcovr -v --filter="$FILTER" --exclude="$SOURCE_BLACKLIST" --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage.html
 
-gcovr -v --filter="$FILTER"  --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage.html
+gcovr  -v --filter="$FILTER"  --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage.html
 cd $LAUNCH_DIR
