@@ -32,11 +32,13 @@ ENDIF()
 
 
 find_library(TCMALLOC tcmalloc PATHS /usr/local/probe/lib )
-set(LIBS ${TCMALLOC})
+
+
+
 
 
 # GENERIC STEPS
-file(GLOB SRC_FILES ${PROJECT_SRC}/*.h ${PROJECT_SRC}/*.hpp ${PROJECT_SRC}/*.cpp ${PROJECT_SRC}/*.ipp)
+file(GLOB SRC_FILES ${PROJECT_SRC}/*.h ${PROJECT_SRC}/*.hpp ${PROJECT_SRC}/*.cpp)
 
 
 # Setup Library name
@@ -46,15 +48,12 @@ SET(LIBRARY_TO_BUILD FileIO)
 
 
 # Create the  library
-MESSAGE("Source files: ${SRC_FILES}")
-MESSAGE("libs: ${LIBS}")
-
 include_directories(${PROJECT_SRC})
 add_library(${LIBRARY_TO_BUILD} SHARED  ${SRC_FILES})
-TARGET_LINK_LIBRARIES(${LIBRARY_TO_BUILD} ${LIBS})
-MESSAGE("\n\n\n\n${LIBRARY_TO_BUILD} VERSION ${VERSION}")
 SET(FileIO_VERSION_STRING ${VERSION})
-set_target_properties(${LIBRARY_TO_BUILD} PROPERTIES LINKER_LANGUAGE CXX SOVERSION ${VERSION})
+SET_TARGET_PROPERTIES(${LIBRARY_TO_BUILD} PROPERTIES LINKER_LANGUAGE CXX SOVERSION ${VERSION})
+TARGET_LINK_LIBRARIES(${LIBRARY_TO_BUILD} ${TCMALLOC})
+
 
 
 
@@ -85,14 +84,17 @@ list(APPEND TEST_HELPER_LIBS ${BOOST_SYSTEM})
 find_library(STOPWATCH StopWatch PATHS /usr/local/probe/lib )
 list(APPEND TEST_HELPER_LIBS ${STOPWATCH})
 
+find_library(G3LOG g3logger PATHS /usr/local/probe/lib )
+list(APPEND TEST_HELPER_LIBS ${G3LOG})
+
+find_library(G3FILE_ROTATE g3logrotate PATHS /usr/local/probe/lib)
+list(APPEND TEST_HELPER_LIBS ${G3FILE_ROTATE})
 
 
 include_directories(test)
+include_directories(${PROJECT_SRC})
 file(GLOB TEST_SRC_FILES "test/*.cpp")
 
 add_executable(UnitTestRunner 3rdparty/test_main.cpp ${TEST_SRC_FILES} )
-set_target_properties(${test} PROPERTIES COMPILE_DEFINITIONS "GTEST_HAS_TR1_TUPLE=0")
-set_target_properties(${test} PROPERTIES COMPILE_DEFINITIONS "GTEST_HAS_RTTI=0")
+target_link_libraries(UnitTestRunner ${LIBRARY_TO_BUILD} gtest_170_lib ${TEST_HELPER_LIBS})
 set_target_properties(${test} PROPERTIES COMPILE_FLAGS "-isystem -pthread ")
-
-target_link_libraries(UnitTestRunner ${LIBRARY_TO_BUILD} ${TEST_HELPER_LIBS}    gtest_170_lib -lstdc++ -ltcmalloc ${PLATFORM_LINK_LIBRIES} -Wl,-rpath,. -Wl,-rpath,/usr/local/probe/lib  -Wl,-rpath,/usr/local/probe/lib64 )
