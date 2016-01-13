@@ -29,7 +29,7 @@ cd build
 # A dummy version to please cmake
 # As version number we use the commit number on HEAD 
 # we do not bother with other branches for now
-GIT_VERSION=`git rev-list HEAD --count`
+GIT_VERSION=`git rev-list --branches HEAD | wc -l`
 VERSION="1.$GIT_VERSION"
 
 PATH=/usr/local/probe/bin:$PATH
