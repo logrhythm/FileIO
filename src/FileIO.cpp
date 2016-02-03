@@ -21,6 +21,7 @@
 #include <cerrno>
 #include <cstring>
 #include <memory>
+#include <string>
 
 namespace FileIO {
    std::mutex mPermissionsMutex;
@@ -397,7 +398,7 @@ namespace FileIO {
             int removed = rmdir(directory.c_str());
             if (0 != removed) {
                success = false;
-               error << "\n" << directory << error << ", error: " << std::strerror(errno);               
+               error << "\n" << directory << ", error: " << std::strerror(errno);               
             }
          }
       }

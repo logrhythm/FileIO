@@ -60,7 +60,7 @@ TARGET_LINK_LIBRARIES(${LIBRARY_TO_BUILD} ${TCMALLOC})
 
 # create the unit tests
 # =========================
-set(GTEST_DIR ${DIR_3RDPARTY}/gtest-1.7.0)
+set(GTEST_DIR ${DIR_3RDPARTY}/googletest-master/googletest)
 set(GTEST_INCLUDE_DIRECTORIES ${GTEST_DIR}/include ${GTEST_DIR} ${GTEST_DIR}/src)
 MESSAGE( "Attempt to build gtest. gtest directory: " ${GTEST_DIR})
 include_directories(${GTEST_INCLUDE_DIRECTORIES})
@@ -95,6 +95,8 @@ include_directories(test)
 include_directories(${PROJECT_SRC})
 file(GLOB TEST_SRC_FILES "test/*.cpp")
 
+SET(CMAKE_CXX_FLAGS "-Wall -Wno-sign-compare -rdynamic -Wunused -std=c++11 -pthread -D_GLIBCXX_USE_NANOSLEEP")
 add_executable(UnitTestRunner 3rdparty/test_main.cpp ${TEST_SRC_FILES} )
 target_link_libraries(UnitTestRunner ${LIBRARY_TO_BUILD} gtest_170_lib ${TEST_HELPER_LIBS})
+
 set_target_properties(${test} PROPERTIES COMPILE_FLAGS "-isystem -pthread ")
