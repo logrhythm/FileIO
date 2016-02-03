@@ -25,7 +25,7 @@ cd %{name}/
 PATH=/usr/local/probe/bin:$PATH
 rm -f  CMakeCache.txt
 cd 3rdparty
-unzip -u gtest-master.zip
+unzip -u gtest-1.7.0.zip
 cd ..
 
 

@@ -60,7 +60,7 @@ TARGET_LINK_LIBRARIES(${LIBRARY_TO_BUILD} ${TCMALLOC})
 
 # create the unit tests
 # =========================
-set(GTEST_DIR ${DIR_3RDPARTY}/googletest-master/googletest)
+set(GTEST_DIR ${DIR_3RDPARTY}/gtest-1.7.0)
 set(GTEST_INCLUDE_DIRECTORIES ${GTEST_DIR}/include ${GTEST_DIR} ${GTEST_DIR}/src)
 MESSAGE( "Attempt to build gtest. gtest directory: " ${GTEST_DIR})
 include_directories(${GTEST_INCLUDE_DIRECTORIES})
