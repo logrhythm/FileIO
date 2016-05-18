@@ -1,69 +1,73 @@
 #!/bin/bash
 LAUNCH_DIR=`pwd`
+PROJECT="FileIO"
+OBJECT_DIR="FileIO.dir"
 
-# If you need to add a header to the code coverage please put it here
-# example "myfile.h myotherfile.h"
-HEADER_WHITELIST=
+# --- WHITELIST ---
+# Add a header to the code coverage here
+#    Examples:
+#    HEADER_WHITELIST="myfile.h"
+#    HEADER_WHITELIST="myfile.h myotherfile.h"
+HEADER_WHITELIST=""
 
-# black listing of files can also be done
-# please see commented out execution of gcovr at the bottom
-# example: 
-#  SOURCE_BLACKLIST=".*ProbeTransmogrifier.cpp.*"
+# --- BLACKLIST ---
+# Blacklisting of files can also be done
+#    Please see commented out execution of gcovr at the bottom.
+#    Example: 
+#       SOURCE_BLACKLIST=".*ProbeTransmogrifier.cpp.*"
+SOURCE_BLACKLIST="/usr/local/probe/*"
 
-
+# --- DIRECTORY SETUP ---
+# Get the gtest library
 cd 3rdparty
 unzip -u gtest-1.7.0.zip
 cd ..
 
-#clean up coverage dir
+# Clean up and create coverage dir
 COVERAGE_DIR=coverage
 rm -rf $COVERAGE_DIR
 mkdir -p $COVERAGE_DIR
 
+# Clean up and create local build dir
 rm -rf build
 mkdir -p build
 cd build
 
-
-
+# --- VERSIONING ---
 # A dummy version to please cmake
 # As version number we use the commit number on HEAD 
 # we do not bother with other branches for now
 GIT_VERSION=`git rev-list --branches HEAD | wc -l`
 VERSION="1.$GIT_VERSION"
 
+# --- BUILD ---
 PATH=/usr/local/probe/bin:$PATH
-/usr/local/probe/bin/cmake -DUSE_LR_DEBUG=ON -DVERSION=$VERSION -DCMAKE_CXX_COMPILER_ARG1:STRING=' -Wall -Werror -g -gdwarf-2 -fprofile-arcs -ftest-coverage -O0 -fPIC -m64 -Wl,-rpath -Wl,. -Wl,-rpath -Wl,/usr/local/probe/lib -Wl,-rpath -Wl,/usr/local/probe/lib64 ' -DCMAKE_CXX_COMPILER=/usr/local/probe/bin/g++ ..
-
+/usr/local/probe/bin/cmake -DUSE_LR_DEBUG=ON -DVERSION=$VERSION -DCMAKE_CXX_COMPILER_ARG1:STRING=' -Wall -Werror -g -gdwarf-2 -fno-elide-constructors -fprofile-arcs -ftest-coverage -O0 -fPIC -m64 -Wl,-rpath -Wl,. -Wl,-rpath -Wl,/usr/local/probe/lib -Wl,-rpath -Wl,/usr/local/probe/lib64 -fno-inline -fno-inline-small-functions -fno-default-inline' -DCMAKE_CXX_COMPILER=/usr/local/probe/bin/g++ ..
 
 make -j
 
-# Run all unit tests excepts the ones that are tagged with Root at the end
-# the reason for this is that the code coverage will fail otherwise due to 
-# some root specific actions that will take place within these tests
-# It is likely a gcovr bug and the test split is a work around
-./UnitTestRunner --gtest_filter=-*Root
-
-#run the root tests once as non-root. They will fail but will generate the .gcda files
-./UnitTestRunner --gtest_filter=*Root 
-
-# the bug in the code coverage for root has to do with the under the cover
-# root manipulation some FileIO code does. Now when the .gcda
-# files already exist we can execute the test again as root
-sudo ./UnitTestRunner --gtest_filter=*Root
-sudo chown -R $USER .
+# --- RUN THE UNIT TESTS ---
+#
+# The FileIO function "ReadAsciiFileContentAsRoot" modifies the permissions of the
+#   process running it. For this reason, code coverage generation fails. It was 
+#   previously thought that running tests as root was the culprit; that is not true.
+#   Running tests as root is fine, but this particular test needs to have its .gcda
+#   file generated first, then filled back in appropriately.
+#
+sudo ./UnitTestRunner --gtest_filter=-*TestReadAsciiFileContentAsRoot
+./UnitTestRunner --gtest_filter=*TestReadAsciiFileContentAsRoot
 cd ..
 
-
-
-PROJECT="FileIO"
-OBJECT_DIR="FileIO.dir"
-#copy source cpp files and profile files to the coverage dir
+# --- WHITELIST FORMATTING ---
+#
+# Convert the Whitelist into a filter
+#
 cp build/CMakeFiles/$OBJECT_DIR/src/* $COVERAGE_DIR
-#convert the whitelist to a filter
 FORMATTED_HEADER_LIST=
+FILTER=
 for header in $HEADER_WHITELIST 
 do
+   echo "Header file in Whitelist: " $header
     if [ -z $FORMATTED_HEADER_LIST ] ; then
         FORMATTED_HEADER_LIST=".*$header\$"
     else
@@ -78,8 +82,12 @@ else
 fi
 
 PATH=/usr/local/probe/bin:$PATH
-# Uncomment/replace with the gcovr line at the bottom to enabled source blacklist
-#gcovr -v --filter="$FILTER" --exclude="$SOURCE_BLACKLIST" --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage.html
 
-gcovr  -v --filter="$FILTER"  --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage.html
+# --- BLACKLIST GCOVR ---
+# Uncomment the following GCOVR line to enable the BLACKLIST
+# gcovr -v --exclude="$SOURCE_BLACKLIST" --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage.html
+
+# --- WHITELIST GCOVR ---
+gcovr  -v --filter="$FILTER" --exclude="$SOURCE_BLACKLIST" --sort-percentage --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage_${PROJECT}.html
+
 cd $LAUNCH_DIR
