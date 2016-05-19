@@ -1,14 +1,14 @@
 #!/bin/bash
 LAUNCH_DIR=`pwd`
 PROJECT="FileIO"
-OBJECT_DIR="FileIO.dir"
+OBJECT_DIR="${PROJECT}.dir"
 
 # --- WHITELIST ---
 # Add a header to the code coverage here
 #    Examples:
 #    HEADER_WHITELIST="myfile.h"
 #    HEADER_WHITELIST="myfile.h myotherfile.h"
-HEADER_WHITELIST=""
+HEADER_WHITELIST=
 
 # --- BLACKLIST ---
 # Blacklisting of files can also be done
@@ -88,6 +88,6 @@ PATH=/usr/local/probe/bin:$PATH
 # gcovr -v --exclude="$SOURCE_BLACKLIST" --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage.html
 
 # --- WHITELIST GCOVR ---
-gcovr  -v --filter="$FILTER" --exclude="$SOURCE_BLACKLIST" --sort-percentage --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage_${PROJECT}.html
+gcovr --verbose --filter="$FILTER" --exclude="$SOURCE_BLACKLIST" --sort-percentage --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage_${PROJECT}.html
 
 cd $LAUNCH_DIR
