@@ -3,22 +3,58 @@ LAUNCH_DIR=`pwd`
 PROJECT="FileIO"
 OBJECT_DIR="${PROJECT}.dir"
 
+DEFAULT_WHITELIST=".*cpp$"
+DEFAULT_BLACKLIST="/usr/local/probe/.*"
+
 # --- WHITELIST ---
+#
 # Add a header to the code coverage here
 #    Examples:
 #    HEADER_WHITELIST="myfile.h"
 #    HEADER_WHITELIST="myfile.h myotherfile.h"
+#
 HEADER_WHITELIST=
 
 # --- BLACKLIST ---
+#
 # Blacklisting of files can also be done
 #    Please see commented out execution of gcovr at the bottom.
 #    Example: 
 #       SOURCE_BLACKLIST=".*ProbeTransmogrifier.cpp.*"
-SOURCE_BLACKLIST="/usr/local/probe/*"
+#
+SOURCE_BLACKLIST=
+
+function formatForFilter ()
+{
+   FORMATTED_HEADER_LIST=
+   for header in $1
+   do
+      if [ -z $FORMATTED_HEADER_LIST ] ; then
+         FORMATTED_HEADER_LIST=".*$header\$"
+      else
+         FORMATTED_HEADER_LIST="$FORMATTED_HEADER_LIST|.*$header\$"
+      fi
+   done
+   echo "$FORMATTED_HEADER_LIST"
+}
+
+function createFilterForGcovr ()
+{
+   DEFAULT_LIST="$1"
+   FORMATTED_USER_LIST="$2"
+   FILTER=
+   if [ -z $FORMATTED_USER_LIST ] ; then
+      FILTER="$DEFAULT_LIST"
+   else
+      FILTER="$DEFAULT_LIST|$FORMATTED_USER_LIST"
+   fi
+   echo "$FILTER"
+}
 
 # --- DIRECTORY SETUP ---
+#
 # Get the gtest library
+#
 cd 3rdparty
 unzip -u gtest-1.7.0.zip
 cd ..
@@ -63,31 +99,28 @@ cd ..
 # Convert the Whitelist into a filter
 #
 cp build/CMakeFiles/$OBJECT_DIR/src/* $COVERAGE_DIR
-FORMATTED_HEADER_LIST=
-FILTER=
-for header in $HEADER_WHITELIST 
-do
-   echo "Header file in Whitelist: " $header
-    if [ -z $FORMATTED_HEADER_LIST ] ; then
-        FORMATTED_HEADER_LIST=".*$header\$"
-    else
-        FORMATTED_HEADER_LIST="$FORMATTED_HEADER_LIST|.*$header\$"
-    fi
-done
+FORMATTED_HEADER_WHITELIST=$(formatForFilter "$HEADER_WHITELIST")
+echo "FORMATTED_HEADER_WHITELIST is : $FORMATTED_SOURCE_BLACKLIST"
+FILTER=$(createFilterForGcovr "$DEFAULT_WHITELIST" "$FORMATTED_HEADER_WHITELIST")
+echo "FILTER pattern is : $FILTER"
+
+# --- BLACKLIST FORMATTING ---
+#
+# Convert the Blacklist into a filter
+#
+FORMATTED_SOURCE_BLACKLIST=$(formatForFilter "$SOURCE_BLACKLIST")
+echo "FORMATTED_SOURCE_BLACKLIST is : $FORMATTED_SOURCE_BLACKLIST"
+EXCLUDE=$(createFilterForGcovr "$DEFAULT_BLACKLIST" "$FORMATTED_SOURCE_BLACKLIST")
+echo "EXCLUDE pattern is : $EXCLUDE"
+
 cd $COVERAGE_DIR
-if [ -z $FORMATTED_HEADER_LIST ] ; then
-    FILTER=".*cpp$"
-else
-    FILTER=".*cpp$|$FORMATTED_HEADER_LIST"
-fi
 
 PATH=/usr/local/probe/bin:$PATH
 
-# --- BLACKLIST GCOVR ---
-# Uncomment the following GCOVR line to enable the BLACKLIST
-# gcovr -v --exclude="$SOURCE_BLACKLIST" --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage.html
-
-# --- WHITELIST GCOVR ---
-gcovr --verbose --filter="$FILTER" --exclude="$SOURCE_BLACKLIST" --sort-percentage --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage_${PROJECT}.html
+# --- GCOVR ---
+#
+# Includes BOTH the whitelist and the blacklist
+#
+gcovr  --verbose --filter="$FILTER" --exclude="$EXCLUDE" --sort-percentage --gcov-executable /usr/local/probe/bin/gcov --exclude-unreachable-branches --html --html-details -o coverage_${PROJECT}.html
 
 cd $LAUNCH_DIR
