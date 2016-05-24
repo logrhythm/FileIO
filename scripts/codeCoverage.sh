@@ -1,10 +1,4 @@
 #!/bin/bash
-LAUNCH_DIR=`pwd`
-PROJECT="FileIO"
-OBJECT_DIR="${PROJECT}.dir"
-
-DEFAULT_WHITELIST=".*cpp$"
-DEFAULT_BLACKLIST="/usr/local/probe/.*"
 
 # --- WHITELIST ---
 #
@@ -51,6 +45,36 @@ function createFilterForGcovr ()
    echo "$FILTER"
 }
 
+function getProjectNameFromCMake ()
+{
+   filename="$1"
+   filenameRegex="SET\(LIBRARY_TO_BUILD (.*)\)$"
+   while IFS='' read -r line || [[ -n "$line" ]]; do
+      if [[ $line =~ $filenameRegex ]] ; then
+         echo "${BASH_REMATCH[1]}"
+         break
+      fi
+   done < $filename
+}
+
+function cleanAndRebuildDir ()
+{
+   DIRECTORY="$1"
+   rm -rf $DIRECTORY
+   mkdir -p $DIRECTORY
+}
+
+LAUNCH_DIR=`pwd`
+CMAKELISTSFILE=$LAUNCH_DIR/CMakeLists.txt
+
+PROJECT=$(getProjectNameFromCMake "$CMAKELISTSFILE")
+OBJECT_DIR="${PROJECT}.dir"
+
+DEFAULT_WHITELIST=".*cpp$"
+DEFAULT_BLACKLIST="/usr/local/probe/.*"
+
+echo "The Project name is : $PROJECT"
+
 # --- DIRECTORY SETUP ---
 #
 # Get the gtest library
@@ -61,12 +85,11 @@ cd ..
 
 # Clean up and create coverage dir
 COVERAGE_DIR=coverage
-rm -rf $COVERAGE_DIR
-mkdir -p $COVERAGE_DIR
+cleanAndRebuildDir "$COVERAGE_DIR"
 
 # Clean up and create local build dir
-rm -rf build
-mkdir -p build
+BUILD_DIR=build
+cleanAndRebuildDir "$BUILD_DIR"
 cd build
 
 # --- VERSIONING ---
@@ -84,14 +107,8 @@ make -j
 
 # --- RUN THE UNIT TESTS ---
 #
-# The FileIO function "ReadAsciiFileContentAsRoot" modifies the permissions of the
-#   process running it. For this reason, code coverage generation fails. It was 
-#   previously thought that running tests as root was the culprit; that is not true.
-#   Running tests as root is fine, but this particular test needs to have its .gcda
-#   file generated first, then filled back in appropriately.
-#
-sudo ./UnitTestRunner --gtest_filter=-*TestReadAsciiFileContentAsRoot
-./UnitTestRunner --gtest_filter=*TestReadAsciiFileContentAsRoot
+cp $LAUNCH_DIR/scripts/unitTestRunner.sh .
+sh unitTestRunner.sh
 cd ..
 
 # --- WHITELIST FORMATTING ---
