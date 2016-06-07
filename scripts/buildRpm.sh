@@ -4,12 +4,20 @@ set -e
 PACKAGE=FileIO
 VERSION=1.0
 
-PWD=`pwd`
-CWD=$PWD/$PACKAGE
-DISTDIR=$CWD/dist/$PACKAGE
-PATH=$PATH:/usr/local/probe/bin:$PATH
+if [[ $# -ne 1   ]] ; then
+   echo 'Usage:  sh buildRpm <BUILD_TYPE>'
+   echo '        BUILD_TYPE is PRODUCTION or DEBUG'
+   exit 0
+fi
 
-VERSION="$1"
+if [ "$1" = "PRODUCTION"   ] ; then
+   BUILD_TYPE="-DUSE_LR_DEBUG=OFF"
+elif  [ "$1" = "DEBUG"   ] ; then
+   BUILD_TYPE="-DUSE_LR_DEBUG=ON"
+else
+   echo "<BUILD_TYPE> must be one of: PRODUCTION or DEBUG"
+   exit 0
+fi
 
 # As version number we use the commit number on HEAD 
 # we do not bother with other branches for now
@@ -33,4 +41,4 @@ cp $PACKAGE-$VERSION.tar.gz ~/rpmbuild/SOURCES
 cd ~/rpmbuild
 
 
-rpmbuild -v -bb  --define="version ${VERSION}" --target=x86_64 ~/rpmbuild/SPECS/$PACKAGE.spec
+rpmbuild -v -bb  --define="version ${VERSION}" --define="buildtype ${BUILD_TYPE}" --target=x86_64 ~/rpmbuild/SPECS/$PACKAGE.spec
