@@ -635,11 +635,11 @@ TEST_F(TestFileIO, TestReadAsciiFileContentAsRoot) {
    ASSERT_NE(targetGID, 0);
 
    //Open a common root permissioned file without root permissions.
-   auto badResult = FileIO::ReadAsciiFileContent("/etc/sysconfig/iptables");
+   auto badResult = FileIO::ReadAsciiFileContent("/etc/sysconfig/iptables-config");
    ASSERT_TRUE(badResult.HasFailed());
 
    //Open a common root permissioned file.
-   auto goodResult = FileIO::ReadAsciiFileContentAsRoot("/etc/sysconfig/iptables");
+   auto goodResult = FileIO::ReadAsciiFileContentAsRoot("/etc/sysconfig/iptables-config");
    EXPECT_FALSE(goodResult.HasFailed());
    EXPECT_TRUE(goodResult.result.size() > 0);
 }

@@ -75,10 +75,10 @@ set(TEST_HELPER_LIBS ${TCMALLOC})
 find_library(BOOST_THREAD boost_thread PATHS /usr/local/probe/lib )
 list(APPEND TEST_HELPER_LIBS ${BOOST_THREAD})
 
-find_library(BOOST_FILESYSTEM boost_thread PATHS /usr/local/probe/lib )
+find_library(BOOST_FILESYSTEM boost_filesystem PATHS /usr/local/probe/lib )
 list(APPEND TEST_HELPER_LIBS ${BOOST_FILESYSTEM})
 
-find_library(BOOST_SYSTEM boost_filesystem PATHS /usr/local/probe/lib )
+find_library(BOOST_SYSTEM boost_system PATHS /usr/local/probe/lib )
 list(APPEND TEST_HELPER_LIBS ${BOOST_SYSTEM})
 
 find_library(STOPWATCH StopWatch PATHS /usr/local/probe/lib )
