@@ -937,7 +937,7 @@ TEST_F(TestFileIO, DISABLED_System_Performance_FileIO_DirectoryReader__vs_Boost_
        << timeCheck << " millisec" << std::endl;
 }
 
-std::string TestFileIO::CreateTestDirectoryAndFiles(const std::vector<std::string>& filenamesToTouch, const std::string& newDirName) {
+std::string TestFileIO::CreateTestDirectoryAndFiles(const std::vector<std::string>& filenamesToTouch, const std::string& newDirName = "TestDir") {
    // Create directory
    std::string newDirectoryPath = mTestDirectory + std::string("/") + newDirName;
    std::string createdDirectoryPath = CreateSubDirectory(newDirName, mTestDirectory);
@@ -962,28 +962,17 @@ void TestFileIO::VerifyDirectoryContents(const std::vector<std::string>& filenam
 }
 
 TEST_F(TestFileIO, CreateOneFileAndReadItIn) {
-   std::string newTestDirName = "TestDir";
    std::vector<std::string> filenames = {"test1"};
-   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames, newTestDirName);
-
-   // Read directory contents
+   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames);
    auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
    VerifyDirectoryContents(filenames, dirContentsResult);
 }
 
 TEST_F(TestFileIO, CreateMultipleFilesAndReadThemIn) {
-   std::string newTestDirName = "TestDir";
    std::vector<std::string> filenames = {"test1", "test2", "test3", "test4"};
-   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames, newTestDirName);
-
-   // Read directory contents
+   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames);
    auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
-   EXPECT_TRUE(dirContentsResult.HasSuccess());
-   auto vecOfDirContents = dirContentsResult.result; 
-   EXPECT_EQ(vecOfDirContents.size(), filenames.size());
-   for (const auto& filename : vecOfDirContents) {
-      EXPECT_TRUE(std::find(vecOfDirContents.begin(), vecOfDirContents.end(), filename) != vecOfDirContents.end());
-   }
+   VerifyDirectoryContents(filenames, dirContentsResult);
 }
 
 TEST_F(TestFileIO, DirectoryDoesNotExist_NoFilesReturned) {
@@ -994,13 +983,8 @@ TEST_F(TestFileIO, DirectoryDoesNotExist_NoFilesReturned) {
 }
 
 TEST_F(TestFileIO, EmptyDirectory_NoFilesReturnedButNoFailure) {
-   std::string newTestDirName = "TestDir";
    std::vector<std::string> filenames = {};
-   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames, newTestDirName);
-
-   // Read directory contents
+   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames);
    auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
-   EXPECT_TRUE(dirContentsResult.HasSuccess());
-   auto vecOfDirContents = dirContentsResult.result; 
-   EXPECT_EQ(0, vecOfDirContents.size());
+   VerifyDirectoryContents(filenames, dirContentsResult);
 }
