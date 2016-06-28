@@ -584,11 +584,11 @@ namespace FileIO {
    Result<std::vector<std::string>> GetDirectoryContents(const std::string& directory) {
      std::vector<std::string> filesInDirectory;
      DIR* dir;
-     struct dirent* ent;
+     struct dirent* entry;
      if ((dir = opendir (directory.c_str())) != NULL) {
-       while ((ent = readdir (dir)) != NULL) {
-         if (!(std::string(ent->d_name) == "." || std::string(ent->d_name) == "..")) {
-            filesInDirectory.push_back(std::string(ent->d_name));
+       while ((entry = readdir (dir)) != NULL) {
+         if (!(std::string(entry->d_name) == "." || std::string(entry->d_name) == "..")) {
+            filesInDirectory.push_back(std::string(entry->d_name));
          }
        }
        closedir (dir);
