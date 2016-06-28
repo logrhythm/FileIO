@@ -847,10 +847,6 @@ auto DirectoryReaderFindsEntities = [](const std::string& path) {
 };
 
 
-
-
-
-
 /// Boost fileystem location of entities, one level down and return how many were found
 auto BoostFilesystemFindsEntities = [](const std::string& path) {
    boost::filesystem::path boostPath = path;
@@ -863,14 +859,6 @@ auto BoostFilesystemFindsEntities = [](const std::string& path) {
    }
    return filecounter;
 };
-
-
-
-
-
-
-
-
 
 
 // 
@@ -927,13 +915,6 @@ auto FileSystemWalkerFindsEntities = [](const std::string& path) {
 
 
 
-
-
-
-
-
-
-
 TEST_F(TestFileIO, DISABLED_System_Performance_FileIO_DirectoryReader__vs_Boost_FileSystem) {
    const std::string path = {"/tmp/"};
 
@@ -954,6 +935,14 @@ TEST_F(TestFileIO, DISABLED_System_Performance_FileIO_DirectoryReader__vs_Boost_
    timeCheck = timeToFind.ElapsedMs();
    std::cout  << "Boost filesystem found           " << boostFileCounter << " items in: " 
        << timeCheck << " millisec" << std::endl;
+}
 
+
+TEST_F(TestFileIO, CreateOneFileAndReadItIn) {
+   // Create subdirectory with 1 file
+   std::vector<std::string> filenames = {"test1"};
+   std::string newTestDirName = "TestDir";
+   CreateSubDirectory(newTestDirName, mTestDirectory);
+   EXPECT_TRUE(FileIO::DoesDirectoryExist(mTestDirectory + std::string("/") + newTestDirName));
 
 }
