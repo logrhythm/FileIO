@@ -939,10 +939,88 @@ TEST_F(TestFileIO, DISABLED_System_Performance_FileIO_DirectoryReader__vs_Boost_
 
 
 TEST_F(TestFileIO, CreateOneFileAndReadItIn) {
-   // Create subdirectory with 1 file
-   std::vector<std::string> filenames = {"test1"};
+   // Create subdirectory: /tmp/TempDirectoryTestOfFileIO/TestDir/
    std::string newTestDirName = "TestDir";
-   CreateSubDirectory(newTestDirName, mTestDirectory);
-   EXPECT_TRUE(FileIO::DoesDirectoryExist(mTestDirectory + std::string("/") + newTestDirName));
+   std::string newDirectoryPath = mTestDirectory + std::string("/") + newTestDirName;
+   std::string createdDirectoryPath = CreateSubDirectory(newTestDirName, mTestDirectory);
+   EXPECT_TRUE(FileIO::DoesDirectoryExist(newDirectoryPath));
+   EXPECT_EQ(newDirectoryPath, createdDirectoryPath);
 
+   // Add 1 file
+   std::vector<std::string> filenames = {"test1"};
+   for (const auto& filename : filenames) {
+      std::string createdFilePath = CreateFile(createdDirectoryPath, filename);
+      EXPECT_TRUE(FileIO::DoesFileExist(createdFilePath));
+   }
+
+   // Read directory contents
+   auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
+   EXPECT_TRUE(dirContentsResult.HasSuccess());
+   auto vecOfDirContents = dirContentsResult.result; 
+   EXPECT_EQ(vecOfDirContents.size(), filenames.size());
+   for (const auto& filename : vecOfDirContents) {
+      EXPECT_TRUE(std::find(vecOfDirContents.begin(), vecOfDirContents.end(), filename) != vecOfDirContents.end());
+   }
+}
+
+TEST_F(TestFileIO, CreateMultipleFilesAndReadThemIn) {
+   // Create subdirectory: /tmp/TempDirectoryTestOfFileIO/TestDir/
+   std::string newTestDirName = "TestDir";
+   std::string newDirectoryPath = mTestDirectory + std::string("/") + newTestDirName;
+   std::string createdDirectoryPath = CreateSubDirectory(newTestDirName, mTestDirectory);
+   EXPECT_TRUE(FileIO::DoesDirectoryExist(newDirectoryPath));
+   EXPECT_EQ(newDirectoryPath, createdDirectoryPath);
+
+   // Add multiple files
+   std::vector<std::string> filenames = {"test1", "test2", "test3", "test4"};
+   for (const auto& filename : filenames) {
+      std::string createdFilePath = CreateFile(createdDirectoryPath, filename);
+      EXPECT_TRUE(FileIO::DoesFileExist(createdFilePath));
+   }
+
+   // Read directory contents
+   auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
+   EXPECT_TRUE(dirContentsResult.HasSuccess());
+   auto vecOfDirContents = dirContentsResult.result; 
+   EXPECT_EQ(vecOfDirContents.size(), filenames.size());
+   for (const auto& filename : vecOfDirContents) {
+      EXPECT_TRUE(std::find(vecOfDirContents.begin(), vecOfDirContents.end(), filename) != vecOfDirContents.end());
+   }
+}
+
+TEST_F(TestFileIO, DirectoryDoesNotExist_NoFilesReturned) {
+   // Create subdirectory: /tmp/TempDirectoryTestOfFileIO/TestDir/
+   std::string newTestDirName = "TestDir";
+   std::string newDirectoryPath = mTestDirectory + std::string("/") + newTestDirName;
+   std::string createdDirectoryPath = CreateSubDirectory(newTestDirName, mTestDirectory);
+   EXPECT_TRUE(FileIO::DoesDirectoryExist(newDirectoryPath));
+   EXPECT_EQ(newDirectoryPath, createdDirectoryPath);
+
+   // Add 1 file
+   std::vector<std::string> filenames = {"test1", "test2", "test3", "test4"};
+   for (const auto& filename : filenames) {
+      std::string createdFilePath = CreateFile(createdDirectoryPath, filename);
+      EXPECT_TRUE(FileIO::DoesFileExist(createdFilePath));
+   }
+
+   // Read directory contents
+   auto dirContentsResult = FileIO::GetDirectoryContents("directory/does/not/exist");
+   EXPECT_FALSE(dirContentsResult.HasSuccess());
+   auto vecOfDirContents = dirContentsResult.result; 
+   EXPECT_EQ(0, vecOfDirContents.size());
+}
+
+TEST_F(TestFileIO, EmptyDirectory_NoFilesReturnedButNoFailure) {
+   // Create subdirectory: /tmp/TempDirectoryTestOfFileIO/TestDir/
+   std::string newTestDirName = "TestDir";
+   std::string newDirectoryPath = mTestDirectory + std::string("/") + newTestDirName;
+   std::string createdDirectoryPath = CreateSubDirectory(newTestDirName, mTestDirectory);
+   EXPECT_TRUE(FileIO::DoesDirectoryExist(newDirectoryPath));
+   EXPECT_EQ(newDirectoryPath, createdDirectoryPath);
+
+   // Read directory contents
+   auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
+   EXPECT_TRUE(dirContentsResult.HasSuccess());
+   auto vecOfDirContents = dirContentsResult.result; 
+   EXPECT_EQ(0, vecOfDirContents.size());
 }
