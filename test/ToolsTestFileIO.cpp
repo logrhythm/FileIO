@@ -796,28 +796,6 @@ TEST_F(TestFileIO, SYSTEM__Slash_is_always_A_MountPoint) {
    EXPECT_FALSE(status.HasFailed()) << status.error;
 }
 
-// This could fail if the system is setup with /root as its own partition
-// it is fairly uncommon to do that so I keep it as this for now / Kjell
-TEST_F(TestFileIO, SYSTEM__root_is_not_A_MountPoint) {
-   std::string directory = {"/root"};
-   EXPECT_TRUE(FileIO::DoesDirectoryExist(directory));
-   
-   Result<bool> status = FileIO::IsMountPoint(directory);
-   EXPECT_FALSE(status.result) << status.error;
-   EXPECT_TRUE(status.HasFailed()) << status.error;
-}
-
-
-TEST_F(TestFileIO, SYSTEM__Dependent_Stuff__MountPoint) {
-   
-   Result<bool> status = FileIO::IsMountPoint("/").result;
-   EXPECT_TRUE(status.result) << status.error;
-   EXPECT_FALSE(status.HasFailed()) << status.error;
-   
-   
-   EXPECT_TRUE(FileIO::IsMountPoint("/home").result);
-}
-
 
 
 // FileIO #files   time
