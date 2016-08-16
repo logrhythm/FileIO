@@ -587,7 +587,6 @@ namespace FileIO {
      struct dirent* entry;
      if ((dir = opendir (directory.c_str())) != NULL) {
        while ((entry = readdir (dir)) != NULL) {
-         // if (!(std::string(entry->d_name) == "." || std::string(entry->d_name) == "..")) {
          if (entry->d_type == DT_REG) {
             filesInDirectory.push_back(std::string(entry->d_name));
          }

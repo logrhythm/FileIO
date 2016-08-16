@@ -989,7 +989,7 @@ TEST_F(TestFileIO, EmptyDirectory_NoFilesReturnedButNoFailure) {
    VerifyDirectoryContents(filenames, dirContentsResult);
 }
 
-TEST_F(TestFileIO, HiddenFilesAreNotReturned) {
+TEST_F(TestFileIO, HiddenFilesAreReturned) {
    std::vector<std::string> filenames = {"test1", "test2", ".hiddenfile1", ".hiddenfile2"};
    auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames);
    auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
