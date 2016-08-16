@@ -520,7 +520,7 @@ TEST_F(TestFileIO, CleanDirectoryOfFileContents) {
    EXPECT_EQ(removedFiles, 0);
    
    const auto filepath = CreateFile(mTestDirectory, "some_file");  
-   std::string expectedPath = path + "/some_file";
+   std::string expectedPath = mTestDirectory + "/some_file";
    EXPECT_TRUE(expectedPath == filepath) << "actual path: " << filepath << ", expected path: " << expectedPath;
    EXPECT_TRUE(FileIO::CleanDirectoryOfFileContents(mTestDirectory, removedFiles, newDirectories).result);
    EXPECT_EQ(removedFiles, 1);
