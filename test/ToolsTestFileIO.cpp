@@ -514,11 +514,14 @@ TEST_F(TestFileIO, CleanDirectoryOfFileContents_BogusDirectory) {
 TEST_F(TestFileIO, CleanDirectoryOfFileContents) {   
    std::vector<std::string> newDirectories;
    size_t removedFiles{0};  
-   CreateSubDirectory("some_directory");
+   const auto path = CreateSubDirectory("some_directory");
+   EXPECT_TRUE(path == "/tmp/TempDirectoryTestOfFileIO/some_directory/") << path;
    EXPECT_TRUE(FileIO::DoesDirectoryExist({mTestDirectory + "/some_directory"}));
    EXPECT_EQ(removedFiles, 0);
    
-   CreateFile(mTestDirectory, "some_file");  
+   const auto filepath = CreateFile(mTestDirectory, "some_file");  
+   std::string expectedPath = path + "some_file";
+   EXPECT_TRUE(expectedPath == filepath) << "actual path: " << filepath << ", expected path: " << expectedPath;
    EXPECT_TRUE(FileIO::CleanDirectoryOfFileContents(mTestDirectory, removedFiles, newDirectories).result);
    EXPECT_EQ(removedFiles, 1);
    ASSERT_EQ(newDirectories.size(), 1);
