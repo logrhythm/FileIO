@@ -514,11 +514,14 @@ TEST_F(TestFileIO, CleanDirectoryOfFileContents_BogusDirectory) {
 TEST_F(TestFileIO, CleanDirectoryOfFileContents) {   
    std::vector<std::string> newDirectories;
    size_t removedFiles{0};  
-   CreateSubDirectory("some_directory");
+   const auto path = CreateSubDirectory("some_directory");
+   EXPECT_TRUE(path == "/tmp/TempDirectoryTestOfFileIO/some_directory") << path;
    EXPECT_TRUE(FileIO::DoesDirectoryExist({mTestDirectory + "/some_directory"}));
    EXPECT_EQ(removedFiles, 0);
    
-   CreateFile(mTestDirectory, "some_file");  
+   const auto filepath = CreateFile(mTestDirectory, "some_file");  
+   std::string expectedPath = mTestDirectory + "/some_file";
+   EXPECT_TRUE(expectedPath == filepath) << "actual path: " << filepath << ", expected path: " << expectedPath;
    EXPECT_TRUE(FileIO::CleanDirectoryOfFileContents(mTestDirectory, removedFiles, newDirectories).result);
    EXPECT_EQ(removedFiles, 1);
    ASSERT_EQ(newDirectories.size(), 1);
@@ -794,28 +797,6 @@ TEST_F(TestFileIO, SYSTEM__Slash_is_always_A_MountPoint) {
    Result<bool> status = FileIO::IsMountPoint(directory);
    EXPECT_TRUE(status.result) << status.error;
    EXPECT_FALSE(status.HasFailed()) << status.error;
-}
-
-// This could fail if the system is setup with /root as its own partition
-// it is fairly uncommon to do that so I keep it as this for now / Kjell
-TEST_F(TestFileIO, SYSTEM__root_is_not_A_MountPoint) {
-   std::string directory = {"/root"};
-   EXPECT_TRUE(FileIO::DoesDirectoryExist(directory));
-   
-   Result<bool> status = FileIO::IsMountPoint(directory);
-   EXPECT_FALSE(status.result) << status.error;
-   EXPECT_TRUE(status.HasFailed()) << status.error;
-}
-
-
-TEST_F(TestFileIO, SYSTEM__Dependent_Stuff__MountPoint) {
-   
-   Result<bool> status = FileIO::IsMountPoint("/").result;
-   EXPECT_TRUE(status.result) << status.error;
-   EXPECT_FALSE(status.HasFailed()) << status.error;
-   
-   
-   EXPECT_TRUE(FileIO::IsMountPoint("/home").result);
 }
 
 
