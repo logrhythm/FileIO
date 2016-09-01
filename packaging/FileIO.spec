@@ -1,6 +1,6 @@
 Name:          FileIO
 Version:       %{version}
-Release:       1%{?dist}
+Release:       %{buildnumber}%{?dist}
 Summary:       An implemnetation of File IO for C++
 Group:         Development/Tools
 License:       MIT
