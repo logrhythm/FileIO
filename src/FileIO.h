@@ -45,6 +45,8 @@ Result<bool> RemoveFileAsRoot(const std::string& filename);
 Result<std::string> ReadAsciiFileContentAsRoot(const std::string& filename);
 bool MoveFile(const std::string& source, const std::string& dest);
 
+Result<std::vector<std::string>> GetDirectoryContents(const std::string& directory);
+
 struct passwd* GetUserFromPasswordFile(const std::string& username);
 void SetUserFileSystemAccess(const std::string& username);
 

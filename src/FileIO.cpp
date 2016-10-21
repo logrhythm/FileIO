@@ -580,5 +580,24 @@ namespace FileIO {
 
       return (0 == rc);
    }
+
+   Result<std::vector<std::string>> GetDirectoryContents(const std::string& directory) {
+     std::vector<std::string> filesInDirectory;
+     DIR* dir;
+     struct dirent* entry;
+     if ((dir = opendir (directory.c_str())) != NULL) {
+       while ((entry = readdir (dir)) != NULL) {
+         if (entry->d_type == DT_REG) {
+            filesInDirectory.push_back(std::string(entry->d_name));
+         }
+       }
+       closedir (dir);
+     } else {
+       return Result<std::vector<std::string>>{{}, "ERROR:  Could not open directory for reading"};
+     }
+     return Result<std::vector<std::string>>{filesInDirectory, ""};
+   }
+
 } // namespace FileIO
+
 

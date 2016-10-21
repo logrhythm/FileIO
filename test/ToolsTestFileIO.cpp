@@ -828,10 +828,6 @@ auto DirectoryReaderFindsEntities = [](const std::string& path) {
 };
 
 
-
-
-
-
 /// Boost fileystem location of entities, one level down and return how many were found
 auto BoostFilesystemFindsEntities = [](const std::string& path) {
    boost::filesystem::path boostPath = path;
@@ -844,14 +840,6 @@ auto BoostFilesystemFindsEntities = [](const std::string& path) {
    }
    return filecounter;
 };
-
-
-
-
-
-
-
-
 
 
 // 
@@ -908,13 +896,6 @@ auto FileSystemWalkerFindsEntities = [](const std::string& path) {
 
 
 
-
-
-
-
-
-
-
 TEST_F(TestFileIO, DISABLED_System_Performance_FileIO_DirectoryReader__vs_Boost_FileSystem) {
    const std::string path = {"/tmp/"};
 
@@ -935,6 +916,63 @@ TEST_F(TestFileIO, DISABLED_System_Performance_FileIO_DirectoryReader__vs_Boost_
    timeCheck = timeToFind.ElapsedMs();
    std::cout  << "Boost filesystem found           " << boostFileCounter << " items in: " 
        << timeCheck << " millisec" << std::endl;
+}
 
+std::string TestFileIO::CreateTestDirectoryAndFiles(const std::vector<std::string>& filenamesToTouch, const std::string& newDirName = "TestDir") {
+   // Create directory
+   std::string newDirectoryPath = mTestDirectory + std::string("/") + newDirName;
+   std::string createdDirectoryPath = CreateSubDirectory(newDirName, mTestDirectory);
+   EXPECT_TRUE(FileIO::DoesDirectoryExist(newDirectoryPath));
+   EXPECT_EQ(newDirectoryPath, createdDirectoryPath);
 
+   // Add files to directory
+   for (const auto& filename : filenamesToTouch) {
+      std::string createdFilePath = CreateFile(createdDirectoryPath, filename);
+      EXPECT_TRUE(FileIO::DoesFileExist(createdFilePath));
+   }
+   return createdDirectoryPath;
+}
+   
+void TestFileIO::VerifyDirectoryContents(const std::vector<std::string>& filenamesToVerify, const Result<std::vector<std::string>>& dirContentsResult) {
+   EXPECT_TRUE(dirContentsResult.HasSuccess());
+   auto vecOfDirContents = dirContentsResult.result; 
+   EXPECT_EQ(vecOfDirContents.size(), filenamesToVerify.size());
+   for (const auto& filename : filenamesToVerify) {
+      EXPECT_TRUE(std::find(vecOfDirContents.begin(), vecOfDirContents.end(), filename) != vecOfDirContents.end());
+   }
+}
+
+TEST_F(TestFileIO, CreateOneFileAndReadItIn) {
+   std::vector<std::string> filenames = {"test1"};
+   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames);
+   auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
+   VerifyDirectoryContents(filenames, dirContentsResult);
+}
+
+TEST_F(TestFileIO, CreateMultipleFilesAndReadThemIn) {
+   std::vector<std::string> filenames = {"test1", "test2", "test3", "test4"};
+   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames);
+   auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
+   VerifyDirectoryContents(filenames, dirContentsResult);
+}
+
+TEST_F(TestFileIO, DirectoryDoesNotExist_NoFilesReturned) {
+   auto dirContentsResult = FileIO::GetDirectoryContents("directory/does/not/exist");
+   EXPECT_FALSE(dirContentsResult.HasSuccess());
+   auto vecOfDirContents = dirContentsResult.result; 
+   EXPECT_EQ(0, vecOfDirContents.size());
+}
+
+TEST_F(TestFileIO, EmptyDirectory_NoFilesReturnedButNoFailure) {
+   std::vector<std::string> filenames = {};
+   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames);
+   auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
+   VerifyDirectoryContents(filenames, dirContentsResult);
+}
+
+TEST_F(TestFileIO, HiddenFilesAreReturned) {
+   std::vector<std::string> filenames = {"test1", "test2", ".hiddenfile1", ".hiddenfile2"};
+   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames);
+   auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
+   VerifyDirectoryContents(filenames, dirContentsResult);
 }
