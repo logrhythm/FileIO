@@ -5,8 +5,8 @@ Is a collection of file access and directory traversal utilities that was writte
 
 The major areas it deals with are:
 
-_Directory  traversal and file access actions_:  
-The DirectoryReader and FileSystemWalker are efficient for traversing directory structures and accessing files with ad-hoc actions on those files.  The code was written to be efficient, fast and easy to use. 
+*_Directory  traversal and file access actions_*:  
+The _DirectoryReader_ and _FileSystemWalker_ are efficient for traversing directory structures and accessing files with ad-hoc actions on those files.  The code was written to be efficient, fast and easy to use. 
 
 Errors are handled through return types and embedded error messages with the result.   In an error-prone scenario the FileIO execution is significantly faster than than solutins that utilizes exceptions. 
 
