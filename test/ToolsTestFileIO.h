@@ -51,6 +51,9 @@ protected:
       std::string removeDir{"rm -rf " + mTestDirectory};
       EXPECT_EQ(0, system(removeDir.c_str()));
    }
+  
+   std::string CreateTestDirectoryAndFiles(const std::vector<std::string>& filenamesToTouch, const std::string& newDirName);
+   void VerifyDirectoryContents(const std::vector<std::string>& filenamesToVerify, const Result<std::vector<std::string>>& dirContentsResult);
 
    const std::string mTestDirectory;
 };

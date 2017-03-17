@@ -4,8 +4,8 @@ set -e
 PACKAGE=FileIO
 VERSION=1.0
 
-if [[ $# -ne 1   ]] ; then
-   echo 'Usage:  sh buildRpm <BUILD_TYPE>'
+if [[ $# -ne 2   ]] ; then
+   echo 'Usage:  sh buildRpm <BUILD_TYPE> <BUILD_NUMBER>'
    echo '        BUILD_TYPE is PRODUCTION or DEBUG'
    exit 0
 fi
@@ -19,6 +19,7 @@ else
    exit 0
 fi
 
+BUILD="$2"
 # As version number we use the commit number on HEAD 
 # we do not bother with other branches for now
 GIT_VERSION=`git rev-list --branches HEAD | wc -l`
@@ -41,4 +42,4 @@ cp $PACKAGE-$VERSION.tar.gz ~/rpmbuild/SOURCES
 cd ~/rpmbuild
 
 
-rpmbuild -v -bb  --define="version ${VERSION}" --define="buildtype ${BUILD_TYPE}" --target=x86_64 ~/rpmbuild/SPECS/$PACKAGE.spec
+rpmbuild -v -bb  --define="version ${VERSION}" --define="buildtype ${BUILD_TYPE}" --define="buildnumber ${BUILD}" --target=x86_64 ~/rpmbuild/SPECS/$PACKAGE.spec
