@@ -18,6 +18,9 @@
 #include <pwd.h>
 #include "DirectoryReader.h"
 #include "Result.h"
+#include <functional>
+#include <mutex>
+#include <memory>
 
 namespace FileIO {
 void SetInterruptFlag(volatile int* interrupted = nullptr);
@@ -40,9 +43,7 @@ Result<bool> CleanDirectoryOfFileContents(const std::string& location, size_t& f
 Result<bool> CleanDirectory(const std::string& directory, const bool removeDirectory, size_t& filesRemoved);
 Result<bool> CleanDirectory(const std::string& directory, const bool removeDirectory);
 Result<bool> RemoveEmptyDirectories(const std::vector<std::string>& fullPathDirectories);
-
-Result<bool> RemoveFileAsRoot(const std::string& filename);
-Result<std::string> ReadAsciiFileContentAsRoot(const std::string& filename);
+Result<bool> RemoveFile(const std::string& filename);
 bool MoveFile(const std::string& source, const std::string& dest);
 
 Result<std::vector<std::string>> GetDirectoryContents(const std::string& directory);
@@ -60,4 +61,26 @@ struct ScopedFileDescriptor {
       close(fd);
    }
 };
+
+// Do file access as root user for the function passed in.
+// Example: auto result = FileIO::SudoFile(FileIO::ReadAsciiFileContent, filePath);
+template<typename FnCall, typename... Args>
+auto SudoFile(FnCall fn, Args&& ... args) {
+   static std::mutex mPermissionsMutex2;
+   std::lock_guard<std::mutex> lock(mPermissionsMutex2);
+   auto previuousuid = setfsuid(-1);
+   auto previuousgid = setfsgid(-1);
+
+   // RAII resource cleanup; de-escalate privileges from root to previous: 
+   std::shared_ptr<void> resetPreviousPermisions(nullptr, [&](void*) {
+      setfsuid(previuousuid);
+      setfsgid(previuousgid);
+   });
+
+   setfsuid(0);
+   setfsgid(0);
+   auto func = std::bind(fn, std::forward<Args>(args)...);
+   return func();
+};
+
 }

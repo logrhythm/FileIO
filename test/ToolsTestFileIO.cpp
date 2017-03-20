@@ -246,7 +246,7 @@ TEST_F(TestFileIO, DirectoryIsNotEmpty) {
       std::string file = directory + "/fakefile.txt";
       FileIO::WriteAsciiFileContent(file, "");
       EXPECT_TRUE(FileIO::DoesDirectoryHaveContent(directory));
-      FileIO::RemoveFileAsRoot(file);
+      FileIO::SudoFile(FileIO::RemoveFile, file);
    }
 }
 
@@ -623,7 +623,7 @@ TEST_F(TestFileIO, CleanDirectoryOfFilesAndDirectories) {
 
 }
 
-TEST_F(TestFileIO, TestReadAsciiFileContentAsRoot) {
+TEST_F(TestFileIO, TestSudoFileReadAsciiFileContent) {
 
    int previousUID = setfsuid(-1);
    int previousGID = setfsgid(-1);
@@ -642,15 +642,11 @@ TEST_F(TestFileIO, TestReadAsciiFileContentAsRoot) {
    ASSERT_TRUE(badResult.HasFailed());
 
    //Open a common root permissioned file.
-   auto goodResult = FileIO::ReadAsciiFileContentAsRoot("/etc/sysconfig/iptables-config");
+   std::string filePath("/etc/sysconfig/iptables-config");
+   auto goodResult = FileIO::SudoFile(FileIO::ReadAsciiFileContent, filePath);
    EXPECT_FALSE(goodResult.HasFailed());
    EXPECT_TRUE(goodResult.result.size() > 0);
 }
-
-
-
-
-
 
 TEST_F(TestFileIO, AThousandFiles) {
    using namespace FileIO;
