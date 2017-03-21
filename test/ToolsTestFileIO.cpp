@@ -247,6 +247,7 @@ TEST_F(TestFileIO, DirectoryIsNotEmpty) {
       FileIO::WriteAsciiFileContent(file, "");
       EXPECT_TRUE(FileIO::DoesDirectoryHaveContent(directory));
       FileIO::SudoFile(FileIO::RemoveFile, file);
+      EXPECT_FALSE(FileIO::DoesDirectoryHaveContent(directory));
    }
 }
 
@@ -646,6 +647,43 @@ TEST_F(TestFileIO, TestSudoFileReadAsciiFileContent) {
    auto goodResult = FileIO::SudoFile(FileIO::ReadAsciiFileContent, filePath);
    EXPECT_FALSE(goodResult.HasFailed());
    EXPECT_TRUE(goodResult.result.size() > 0);
+
+   FileIO::SetUserFileSystemAccess("root");
+}
+
+TEST_F(TestFileIO, TestSudoFileRemoveFile) {
+
+   // Start as root user
+   int previousUID = setfsuid(-1);
+   int previousGID = setfsgid(-1);
+   ASSERT_EQ(previousUID, 0);
+   ASSERT_EQ(previousGID, 0);
+
+   std::string filename{"/tmp/TestFileIO_"};
+   filename.append(std::to_string(random_int(0, 1000000)))
+           .append({"_"})
+   .append(std::to_string(random_int(0, 1000000)));
+
+   // Write file as user "root"
+   auto fileWrite = FileIO::WriteAsciiFileContent(filename,{"Hello World"});
+   EXPECT_TRUE(fileWrite.result);
+
+   FileIO::SetUserFileSystemAccess("nobody");
+   int targetUID = setfsuid(-1);
+   int targetGID = setfsgid(-1);
+   ASSERT_NE(targetUID, 0);
+   ASSERT_NE(targetGID, 0);
+
+   // Attempt to remove file as "nobody"
+   auto nobodyResult = FileIO::RemoveFile(filename);
+   EXPECT_FALSE(nobodyResult.result); // Fail to remove file as user nobody
+
+   // Now use SudoFile.
+   auto sudoFileResult = FileIO::SudoFile(FileIO::RemoveFile, filename);
+   EXPECT_TRUE(sudoFileResult.result); // Succeed using SudoFile
+   EXPECT_FALSE(FileIO::DoesFileExist(filename));
+
+   FileIO::SetUserFileSystemAccess("root");
 }
 
 TEST_F(TestFileIO, AThousandFiles) {
