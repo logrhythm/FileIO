@@ -65,7 +65,7 @@ struct ScopedFileDescriptor {
 // Do file access as root user for the function passed in.
 // Example: auto result = FileIO::SudoFile(FileIO::ReadAsciiFileContent, filePath);
 template<typename FnCall, typename... Args>
-auto SudoFile(FnCall fn, Args&& ... args) {
+auto SudoFile(FnCall fn, Args&& ... args) -> typename std::result_of<decltype(fn)(Args...)>::type {
    static std::mutex sudoFileMutex;
    std::lock_guard<std::mutex> lock(sudoFileMutex);
    auto previuousuid = setfsuid(-1);
