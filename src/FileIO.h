@@ -66,8 +66,8 @@ struct ScopedFileDescriptor {
 // Example: auto result = FileIO::SudoFile(FileIO::ReadAsciiFileContent, filePath);
 template<typename FnCall, typename... Args>
 auto SudoFile(FnCall fn, Args&& ... args) {
-   static std::mutex mPermissionsMutex2;
-   std::lock_guard<std::mutex> lock(mPermissionsMutex2);
+   static std::mutex sudoFileMutex;
+   std::lock_guard<std::mutex> lock(sudoFileMutex);
    auto previuousuid = setfsuid(-1);
    auto previuousgid = setfsgid(-1);
 

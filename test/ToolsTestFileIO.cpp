@@ -12,7 +12,6 @@
 #include <boost/filesystem.hpp>
 #include <future>
 #include <thread>
-#include <random>
 #include <sstream>
 #include <unistd.h>
 #include "ToolsTestFileIO.h"
@@ -112,9 +111,7 @@ TEST_F(TestFileIO, TestOfTestUtility) {
 TEST_F(TestFileIO, WriteThenReadBinaryFileContent__Convert_uint8_to_char_should_work_fine){
       using namespace std;
 
-   string filename{"/tmp/TestFileIO_"};
-   filename.append(to_string(random_int(0, 1000000)))
-     .append({"_"}).append(to_string(random_int(0, 1000000)));
+   string filename{mTestDirectory + "/TestFileIO"};
 
    // cleanup/removing the created file when exiting
    ScopedFileCleanup cleanup{filename};
@@ -166,10 +163,7 @@ TEST_F(TestFileIO, CannotWriteToFile) {
 TEST_F(TestFileIO, CanWriteToFileAndReadTheFile) {
    using namespace std;
 
-   string filename{"/tmp/TestFileIO_"};
-   filename.append(to_string(random_int(0, 1000000)))
-           .append({"_"})
-   .append(to_string(random_int(0, 1000000)));
+   std::string filename{mTestDirectory + "/TestFileIO"};
 
    // cleanup/removing the created file when exiting
    ScopedFileCleanup cleanup{filename};
@@ -659,10 +653,7 @@ TEST_F(TestFileIO, TestSudoFileRemoveFile) {
    ASSERT_EQ(previousUID, 0);
    ASSERT_EQ(previousGID, 0);
 
-   std::string filename{"/tmp/TestFileIO_"};
-   filename.append(std::to_string(random_int(0, 1000000)))
-           .append({"_"})
-   .append(std::to_string(random_int(0, 1000000)));
+   std::string filename{mTestDirectory + "/TestFileIO"};
 
    // Write file as user "root"
    auto fileWrite = FileIO::WriteAsciiFileContent(filename,{"Hello World"});
