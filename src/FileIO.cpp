@@ -10,7 +10,6 @@
 
 #include "FileIO.h"
 #include "DirectoryReader.h"
-#include <mutex>
 #include <sstream>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -20,11 +19,9 @@
 #include <cstdlib>
 #include <cerrno>
 #include <cstring>
-#include <memory>
 #include <string>
 
 namespace FileIO {
-   std::mutex mPermissionsMutex;
    volatile int* gFlagInterrupt = nullptr;
    
    
@@ -138,21 +135,21 @@ namespace FileIO {
    Result<std::string> ReadAsciiFileContent(const std::string& pathToFile) {
       auto result = ReadBinaryFileContent(pathToFile);
       if(result.HasFailed()) {
-        return Result<std::string>{{}, result.error};
+         return Result<std::string>{{}, result.error};
       }
 
       std::string contents(reinterpret_cast<const char*> (result.result.data()), result.result.size());
       return Result<std::string>{contents};
-    }
+   }
 
 
 
-/**
-* Write the serialized date to the given filename
-* @param filename
-* @param content
-* @return whether or not the write was successful
-*/
+   /**
+   * Write the serialized date to the given filename
+   * @param filename
+   * @param content
+   * @return whether or not the write was successful
+   */
    Result<bool> WriteAppendBinaryFileContent(const std::string & filename, const std::vector<uint8_t>& content) {
       
       static_assert(sizeof(char) == sizeof(uint8_t), "File writing assumes equal size for uint8_t and char");
@@ -281,7 +278,7 @@ namespace FileIO {
 
    
    
-/**
+   /**
     * Iterate through the directory. Remove any file found,  save any found directory
     * Any attempt to delete files from "/"or "/root" will be ignored.
     * 
@@ -385,7 +382,8 @@ namespace FileIO {
     size_t filesRemoved {0};
     return CleanDirectory(directory, removeDirectory, filesRemoved);
    }
-/**
+
+   /**
     * Remove directories at the given paths
     * @return whether or not all the operations were successful
     */
@@ -398,7 +396,8 @@ namespace FileIO {
             int removed = rmdir(directory.c_str());
             if (0 != removed) {
                success = false;
-               error << "\n" << directory << ", error: " << std::strerror(errno);               
+               int errsv = errno;
+               error << "\n" << directory << ", error: " << std::strerror(errsv);               
             }
          }
       }
@@ -411,30 +410,21 @@ namespace FileIO {
    }
    
    
+   /*
+    * This function may need to be run with root file system privileges. In that case, it can be wrapped in
+    * FileIO::SudoFile. For example:
+    *    auto result = FileIO::SudoFile(FileIO::ChangeFileOrDirOwnershipToUser, location, "dpi");
+    */
    Result<bool> ChangeFileOrDirOwnershipToUser(const std::string& path, const std::string& username) {
 
-      std::lock_guard<std::mutex> lock(mPermissionsMutex);
-      auto previuousuid = setfsuid(-1);
-      auto previuousgid = setfsgid(-1);
-      setfsuid(0);
-      setfsgid(0);
       struct passwd* pwd = GetUserFromPasswordFile(username);
       auto returnVal = chown(path.c_str(), pwd->pw_uid, pwd->pw_gid);
+      int errsv = errno;
       free(pwd);
-
       if (returnVal < 0) {
-         std::string error{"Cannot chown dir/file: "};
-         error.append(path);
-         error.append(" error number: ");
-         error.append(std::to_string(errno));
-         error.append(" current fs permissions are for uid: ");
-         error.append(std::to_string(setfsuid(-1)));
-         setfsuid(previuousuid);
-         setfsgid(previuousgid);
+         std::string error{"Cannot chown dir/file: " + path + " error number: " + std::to_string(errsv)};
          return Result<bool>{false, error};
       }
-      setfsuid(previuousuid);
-      setfsgid(previuousgid);
       return Result<bool>{true};
    }
 
@@ -473,20 +463,7 @@ namespace FileIO {
 
    }
 
-   Result<bool> RemoveFileAsRoot(const std::string& filename) {
-
-      std::lock_guard<std::mutex> lock(mPermissionsMutex);
-      auto previuousuid = setfsuid(-1);
-      auto previuousgid = setfsgid(-1);
-
-      // RAII resource cleanup; de-escalate privileges from root to previous: 
-      std::shared_ptr<void> resetPreviousPermisions(nullptr, [&](void*) {
-         setfsuid(previuousuid);
-         setfsgid(previuousgid);
-      });
-
-      setfsuid(0);
-      setfsgid(0);
+   Result<bool> RemoveFile(const std::string& filename) {
       int rc = unlink(filename.c_str());
 
       if (rc == -1) {
@@ -494,30 +471,6 @@ namespace FileIO {
       }
       return Result<bool>{true};
    }
-
-   Result<std::string> ReadAsciiFileContentAsRoot(const std::string& filename) {
-
-      std::lock_guard<std::mutex> lock(mPermissionsMutex);
-      auto previuousuid = setfsuid(-1);
-      auto previuousgid = setfsgid(-1);
-
-      // RAII resource cleanup; de-escalate privileges from root to previous: 
-      std::shared_ptr<void> resetPreviousPermisions(nullptr, [&](void*) {
-         setfsuid(previuousuid);
-         setfsgid(previuousgid);
-      });
-
-      setfsuid(0);
-      setfsgid(0);
-      auto result = ReadAsciiFileContent(filename);
-
-      return result;
-   }
-   
-   
-
-   
-
    
    /**
     * Move a file to another location. This works across device boundaries contrary to 
