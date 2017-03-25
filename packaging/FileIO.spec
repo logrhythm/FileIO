@@ -1,10 +1,10 @@
 Name:          FileIO
-Version:       1.0
-Release:       1%{?dist}
+Version:       %{version}
+Release:       %{buildnumber}%{?dist}
 Summary:       An implemnetation of File IO for C++
 Group:         Development/Tools
 License:       MIT
-BuildRequires: probecmake >= 2.8, g2log-dev
+BuildRequires: probecmake >= 2.8
 ExclusiveArch: x86_64
 
 %description
@@ -12,7 +12,7 @@ ExclusiveArch: x86_64
 %prep
 cd ~/rpmbuild/BUILD
 rm -rf %{name}
-mkdir %{name}
+mkdir -p %{name}
 cd %{name}
 tar xzf ~/rpmbuild/SOURCES/%{name}-%{version}.tar.gz
 if [ $? -ne 0 ]; then
@@ -27,12 +27,23 @@ rm -f  CMakeCache.txt
 cd 3rdparty
 unzip -u gtest-1.7.0.zip
 cd ..
-/usr/local/probe/bin/cmake -DCMAKE_CXX_COMPILER_ARG1:STRING=' -fPIC -Ofast -m64 -Wl,-rpath -Wl,. -Wl,-rpath -Wl,/usr/local/probe/lib -Wl,-rpath -Wl,/usr/local/probe/lib64 ' -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_CXX_COMPILER=/usr/local/probe/bin/g++
-make
+
+
+if [ "%{buildtype}" == "-DUSE_LR_DEBUG=OFF"  ]; then
+/usr/local/probe/bin/cmake -DVERSION=%{version} -DCMAKE_CXX_COMPILER_ARG1:STRING=' -std=c++14 -Wall -fPIC -Ofast -m64 -Wl,-rpath -Wl,. -Wl,-rpath -Wl,/usr/local/probe/lib -Wl,-rpath -Wl,/usr/local/probe/lib64 ' -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_CXX_COMPILER=/usr/local/probe/bin/g++
+elif [ "%{buildtype}" == "-DUSE_LR_DEBUG=ON"  ]; then
+   /usr/local/probe/bin/cmake -DUSE_LR_DEBUG=ON -DVERSION=%{version} -DCMAKE_CXX_COMPILER_ARG1:STRING=' -std=c++14 -Wall -Werror -g -gdwarf-2 -O0 -fPIC -m64 -Wl,-rpath -Wl,. -Wl,-rpath -Wl,/usr/local/probe/lib -Wl,-rpath -Wl,/usr/local/probe/lib64 ' -DCMAKE_CXX_COMPILER=/usr/local/probe/bin/g++
+else
+   echo "Unknown buildtype"
+   exit 1
+fi
+
+make VERSION=1 -j6
 sudo ./UnitTestRunner
+
+
 mkdir -p $RPM_BUILD_ROOT/usr/local/probe/lib
-cp *.so $RPM_BUILD_ROOT/usr/local/probe/lib
-rm $RPM_BUILD_ROOT/usr/local/probe/lib/libgtest_170_lib.so
+cp -rfd lib%{name}.so* $RPM_BUILD_ROOT/usr/local/probe/lib
 mkdir -p $RPM_BUILD_ROOT/usr/local/probe/include
 cp src/*.h $RPM_BUILD_ROOT/usr/local/probe/include
 

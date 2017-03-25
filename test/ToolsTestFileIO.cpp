@@ -12,7 +12,6 @@
 #include <boost/filesystem.hpp>
 #include <future>
 #include <thread>
-#include <random>
 #include <sstream>
 #include <unistd.h>
 #include "ToolsTestFileIO.h"
@@ -112,9 +111,7 @@ TEST_F(TestFileIO, TestOfTestUtility) {
 TEST_F(TestFileIO, WriteThenReadBinaryFileContent__Convert_uint8_to_char_should_work_fine){
       using namespace std;
 
-   string filename{"/tmp/TestFileIO_"};
-   filename.append(to_string(random_int(0, 1000000)))
-     .append({"_"}).append(to_string(random_int(0, 1000000)));
+   string filename{mTestDirectory + "/TestFileIO"};
 
    // cleanup/removing the created file when exiting
    ScopedFileCleanup cleanup{filename};
@@ -166,10 +163,7 @@ TEST_F(TestFileIO, CannotWriteToFile) {
 TEST_F(TestFileIO, CanWriteToFileAndReadTheFile) {
    using namespace std;
 
-   string filename{"/tmp/TestFileIO_"};
-   filename.append(to_string(random_int(0, 1000000)))
-           .append({"_"})
-   .append(to_string(random_int(0, 1000000)));
+   std::string filename{mTestDirectory + "/TestFileIO"};
 
    // cleanup/removing the created file when exiting
    ScopedFileCleanup cleanup{filename};
@@ -246,7 +240,8 @@ TEST_F(TestFileIO, DirectoryIsNotEmpty) {
       std::string file = directory + "/fakefile.txt";
       FileIO::WriteAsciiFileContent(file, "");
       EXPECT_TRUE(FileIO::DoesDirectoryHaveContent(directory));
-      FileIO::RemoveFileAsRoot(file);
+      FileIO::SudoFile(FileIO::RemoveFile, file);
+      EXPECT_FALSE(FileIO::DoesDirectoryHaveContent(directory));
    }
 }
 
@@ -327,7 +322,7 @@ TEST_F(TestFileIO, MoveFiles__FileCanBeMovedAcrossDirectories) {
 
 
 
-TEST_F(TestFileIO, SYSTEM__MoveFiles__ThreadSafeMoveOfFiles) {
+TEST_F(TestFileIO, SYSTEM__MoveFiles__ThreadSafeMoveOfFilesShouldBeRunAsRoot) {
    std::string oldStorage = "/tmp";
    std::string newStorage = GetCurrentDirectory();
    if (false == FileIO::DoesDirectoryExist(oldStorage)) {
@@ -412,7 +407,7 @@ TEST_F(TestFileIO, SYSTEM__MoveFiles__ThreadSafeMoveOfFiles) {
 //   real    0m3.430s
 //   user    0m0.021s
 //   sys     0m3.401s
-TEST_F(TestFileIO, SYSTEM__MoveFiles__LargeFileCanBeMovedAcrossDevices) {
+TEST_F(TestFileIO, SYSTEM__MoveFiles__LargeFileCanBeMovedAcrossDevicesShouldBeRunAsRoot) {
    std::string oldStorage = "/tmp";
    std::string newStorage = GetCurrentDirectory();
    if (false == FileIO::DoesDirectoryExist(oldStorage)) {
@@ -514,11 +509,14 @@ TEST_F(TestFileIO, CleanDirectoryOfFileContents_BogusDirectory) {
 TEST_F(TestFileIO, CleanDirectoryOfFileContents) {   
    std::vector<std::string> newDirectories;
    size_t removedFiles{0};  
-   CreateSubDirectory("some_directory");
+   const auto path = CreateSubDirectory("some_directory");
+   EXPECT_TRUE(path == "/tmp/TempDirectoryTestOfFileIO/some_directory") << path;
    EXPECT_TRUE(FileIO::DoesDirectoryExist({mTestDirectory + "/some_directory"}));
    EXPECT_EQ(removedFiles, 0);
    
-   CreateFile(mTestDirectory, "some_file");  
+   const auto filepath = CreateFile(mTestDirectory, "some_file");  
+   std::string expectedPath = mTestDirectory + "/some_file";
+   EXPECT_TRUE(expectedPath == filepath) << "actual path: " << filepath << ", expected path: " << expectedPath;
    EXPECT_TRUE(FileIO::CleanDirectoryOfFileContents(mTestDirectory, removedFiles, newDirectories).result);
    EXPECT_EQ(removedFiles, 1);
    ASSERT_EQ(newDirectories.size(), 1);
@@ -620,7 +618,7 @@ TEST_F(TestFileIO, CleanDirectoryOfFilesAndDirectories) {
 
 }
 
-TEST_F(TestFileIO, TestReadAsciiFileContentAsRoot) {
+TEST_F(TestFileIO, TestSudoFileReadAsciiFileContent) {
 
    int previousUID = setfsuid(-1);
    int previousGID = setfsgid(-1);
@@ -635,19 +633,49 @@ TEST_F(TestFileIO, TestReadAsciiFileContentAsRoot) {
    ASSERT_NE(targetGID, 0);
 
    //Open a common root permissioned file without root permissions.
-   auto badResult = FileIO::ReadAsciiFileContent("/etc/sysconfig/iptables");
+   auto badResult = FileIO::ReadAsciiFileContent("/etc/sysconfig/iptables-config");
    ASSERT_TRUE(badResult.HasFailed());
 
    //Open a common root permissioned file.
-   auto goodResult = FileIO::ReadAsciiFileContentAsRoot("/etc/sysconfig/iptables");
+   std::string filePath("/etc/sysconfig/iptables-config");
+   auto goodResult = FileIO::SudoFile(FileIO::ReadAsciiFileContent, filePath);
    EXPECT_FALSE(goodResult.HasFailed());
    EXPECT_TRUE(goodResult.result.size() > 0);
+
+   FileIO::SetUserFileSystemAccess("root");
 }
 
+TEST_F(TestFileIO, TestSudoFileRemoveFile) {
 
+   // Start as root user
+   int previousUID = setfsuid(-1);
+   int previousGID = setfsgid(-1);
+   ASSERT_EQ(previousUID, 0);
+   ASSERT_EQ(previousGID, 0);
 
+   std::string filename{mTestDirectory + "/TestFileIO"};
 
+   // Write file as user "root"
+   auto fileWrite = FileIO::WriteAsciiFileContent(filename,{"Hello World"});
+   EXPECT_TRUE(fileWrite.result);
 
+   FileIO::SetUserFileSystemAccess("nobody");
+   int targetUID = setfsuid(-1);
+   int targetGID = setfsgid(-1);
+   ASSERT_NE(targetUID, 0);
+   ASSERT_NE(targetGID, 0);
+
+   // Attempt to remove file as "nobody"
+   auto nobodyResult = FileIO::RemoveFile(filename);
+   EXPECT_FALSE(nobodyResult.result); // Fail to remove file as user nobody
+
+   // Now use SudoFile.
+   auto sudoFileResult = FileIO::SudoFile(FileIO::RemoveFile, filename);
+   EXPECT_TRUE(sudoFileResult.result); // Succeed using SudoFile
+   EXPECT_FALSE(FileIO::DoesFileExist(filename));
+
+   FileIO::SetUserFileSystemAccess("root");
+}
 
 TEST_F(TestFileIO, AThousandFiles) {
    using namespace FileIO;
@@ -796,28 +824,6 @@ TEST_F(TestFileIO, SYSTEM__Slash_is_always_A_MountPoint) {
    EXPECT_FALSE(status.HasFailed()) << status.error;
 }
 
-// This could fail if the system is setup with /root as its own partition
-// it is fairly uncommon to do that so I keep it as this for now / Kjell
-TEST_F(TestFileIO, SYSTEM__root_is_not_A_MountPoint) {
-   std::string directory = {"/root"};
-   EXPECT_TRUE(FileIO::DoesDirectoryExist(directory));
-   
-   Result<bool> status = FileIO::IsMountPoint(directory);
-   EXPECT_FALSE(status.result) << status.error;
-   EXPECT_TRUE(status.HasFailed()) << status.error;
-}
-
-
-TEST_F(TestFileIO, SYSTEM__Dependent_Stuff__MountPoint) {
-   
-   Result<bool> status = FileIO::IsMountPoint("/").result;
-   EXPECT_TRUE(status.result) << status.error;
-   EXPECT_FALSE(status.HasFailed()) << status.error;
-   
-   
-   EXPECT_TRUE(FileIO::IsMountPoint("/home").result);
-}
-
 
 
 // FileIO #files   time
@@ -847,10 +853,6 @@ auto DirectoryReaderFindsEntities = [](const std::string& path) {
 };
 
 
-
-
-
-
 /// Boost fileystem location of entities, one level down and return how many were found
 auto BoostFilesystemFindsEntities = [](const std::string& path) {
    boost::filesystem::path boostPath = path;
@@ -863,14 +865,6 @@ auto BoostFilesystemFindsEntities = [](const std::string& path) {
    }
    return filecounter;
 };
-
-
-
-
-
-
-
-
 
 
 // 
@@ -927,13 +921,6 @@ auto FileSystemWalkerFindsEntities = [](const std::string& path) {
 
 
 
-
-
-
-
-
-
-
 TEST_F(TestFileIO, DISABLED_System_Performance_FileIO_DirectoryReader__vs_Boost_FileSystem) {
    const std::string path = {"/tmp/"};
 
@@ -954,6 +941,63 @@ TEST_F(TestFileIO, DISABLED_System_Performance_FileIO_DirectoryReader__vs_Boost_
    timeCheck = timeToFind.ElapsedMs();
    std::cout  << "Boost filesystem found           " << boostFileCounter << " items in: " 
        << timeCheck << " millisec" << std::endl;
+}
 
+std::string TestFileIO::CreateTestDirectoryAndFiles(const std::vector<std::string>& filenamesToTouch, const std::string& newDirName = "TestDir") {
+   // Create directory
+   std::string newDirectoryPath = mTestDirectory + std::string("/") + newDirName;
+   std::string createdDirectoryPath = CreateSubDirectory(newDirName, mTestDirectory);
+   EXPECT_TRUE(FileIO::DoesDirectoryExist(newDirectoryPath));
+   EXPECT_EQ(newDirectoryPath, createdDirectoryPath);
 
+   // Add files to directory
+   for (const auto& filename : filenamesToTouch) {
+      std::string createdFilePath = CreateFile(createdDirectoryPath, filename);
+      EXPECT_TRUE(FileIO::DoesFileExist(createdFilePath));
+   }
+   return createdDirectoryPath;
+}
+   
+void TestFileIO::VerifyDirectoryContents(const std::vector<std::string>& filenamesToVerify, const Result<std::vector<std::string>>& dirContentsResult) {
+   EXPECT_TRUE(dirContentsResult.HasSuccess());
+   auto vecOfDirContents = dirContentsResult.result; 
+   EXPECT_EQ(vecOfDirContents.size(), filenamesToVerify.size());
+   for (const auto& filename : filenamesToVerify) {
+      EXPECT_TRUE(std::find(vecOfDirContents.begin(), vecOfDirContents.end(), filename) != vecOfDirContents.end());
+   }
+}
+
+TEST_F(TestFileIO, CreateOneFileAndReadItIn) {
+   std::vector<std::string> filenames = {"test1"};
+   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames);
+   auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
+   VerifyDirectoryContents(filenames, dirContentsResult);
+}
+
+TEST_F(TestFileIO, CreateMultipleFilesAndReadThemIn) {
+   std::vector<std::string> filenames = {"test1", "test2", "test3", "test4"};
+   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames);
+   auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
+   VerifyDirectoryContents(filenames, dirContentsResult);
+}
+
+TEST_F(TestFileIO, DirectoryDoesNotExist_NoFilesReturned) {
+   auto dirContentsResult = FileIO::GetDirectoryContents("directory/does/not/exist");
+   EXPECT_FALSE(dirContentsResult.HasSuccess());
+   auto vecOfDirContents = dirContentsResult.result; 
+   EXPECT_EQ(0, vecOfDirContents.size());
+}
+
+TEST_F(TestFileIO, EmptyDirectory_NoFilesReturnedButNoFailure) {
+   std::vector<std::string> filenames = {};
+   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames);
+   auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
+   VerifyDirectoryContents(filenames, dirContentsResult);
+}
+
+TEST_F(TestFileIO, HiddenFilesAreReturned) {
+   std::vector<std::string> filenames = {"test1", "test2", ".hiddenfile1", ".hiddenfile2"};
+   auto createdDirectoryPath = CreateTestDirectoryAndFiles(filenames);
+   auto dirContentsResult = FileIO::GetDirectoryContents(createdDirectoryPath);
+   VerifyDirectoryContents(filenames, dirContentsResult);
 }
