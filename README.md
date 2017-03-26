@@ -24,6 +24,7 @@ The **API** is accessible in the [[src]](https://github.com/LogRhythm/FileIO/tre
 For installing boost please follow their [instructions](http://www.boost.org/doc/libs/1_63_0/more/getting_started/unix-variants.html). 
 
 
+## Build and Install
 Example of installation
 ```
 cd FileIO
