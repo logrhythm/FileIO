@@ -23,18 +23,31 @@ The **API** is accessible in the [[src]](https://github.com/LogRhythm/FileIO/tre
 4. [boost](http://www.boost.org/doc/libs/1_63_0/index.html) 
 For installing boost please follow their [instructions](http://www.boost.org/doc/libs/1_63_0/more/getting_started/unix-variants.html). 
 
-## BUILD
+
+Example of installation
 ```
+cd FileIO
 cd 3rdparty
 unzip gtest-1.7.0.zip
+cd ..
 mkdir build
 cd build
 cmake ..
-make
+make -j
+```
+
+### Executing the unit tests
+```
+./UnitTestRunneer
+```
+
+### Installing
+```
 sudo make install
 ```
 
 Alternative on Debian systems
 ```
 make package
-sudo dpkg -i FileIO<package_version>Linux.deb
+sudo dpkg -i FileIO-<package_version>Linux.deb
+```

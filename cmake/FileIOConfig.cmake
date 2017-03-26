@@ -3,9 +3,8 @@
 # -------
 #
 # Find libFileIO
-# FileIO: wrapper around the std::chrono API for easy time expiration retrieval. 
-# AlarmClock: Low CPU clock cycle cost to retrieve if a time period has expired. 
-#
+# FileIO deals with file access and directory traversal.
+##
 # Result variables
 # ^^^^^^^^^^^^^^^^
 #
