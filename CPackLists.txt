@@ -40,32 +40,9 @@ SET(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SRC}/../LICENSE)
 SET(CPACK_PACKAGE_VENDOR "LogRhythm")
 SET(CPACK_RESOURCE_FILE_LICENSE ${PROJECT_SRC}/../LICENSE)
 
-IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-   MESSAGE("\nTo create installation package: ")
-   MESSAGE("make package")
-ENDIF()
-MESSAGE("\nOption to install using 'sudo make install")
-MESSAGE("Installation locations: ")
-MESSAGE("====================")
-MESSAGE("Headers: ${CPACK_INSTALL_PREFIX}/${CMAKE_INSTALL_HEADERDIR}")
-MESSAGE("Library : ${CPACK_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
-# MESSAGE("Headers to be installed: ${HEADER_FILES}")
-
-MESSAGE("For more information please see FileIO/CPackLists.txt")
-MESSAGE("To install: sudo dpkg -i FileIO-<version>-Linux.deb")
-MESSAGE("To list files in install package: sudo dpkg --contents FileIO-<version>-Linux.deb")
-MESSAGE("To list installed files: sudo dpkg -L FileIO")
-MESSAGE("To remove: sudo dpkg -r FileIO")
-MESSAGE("To remove: sudo dpkg -r FileIO")
-
-#  NOTE: to change installation locations you can use the settings below
-#  examples:
-#  CPACK_INSTALL_PREFIX
-#  CMAKE_INSTALL_HEADERDIR
-#  CMAKE_INSTALL_LIBDIR
-
 SET(CMAKE_INSTALL_LIBDIR lib CACHE PATH "Output dir for libraries")
 SET(CMAKE_INSTALL_HEADERDIR include CACHE PATH "Output dir for headers")
+
 
 INSTALL( TARGETS FileIO 
         ARCHIVE DESTINATION ${CPACK_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}
@@ -88,5 +65,28 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
    SET(CPACK_DEBIAN_PACKAGE_MAINTAINER "LogRhythm")
 ENDIF()
 
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+   MESSAGE("\nTo create installation package: ")
+   MESSAGE("make package")
+ENDIF()
 
+MESSAGE("\nOption to install using 'sudo make install")
+MESSAGE("Installation locations: ")
+MESSAGE("====================")
+MESSAGE("Headers: ${CPACK_INSTALL_PREFIX}/${CMAKE_INSTALL_HEADERDIR}")
+MESSAGE("Library : ${CPACK_INSTALL_PREFIX}/${CMAKE_INSTALL_LIBDIR}")
+
+MESSAGE("For more information please see FileIO/CPackLists.txt")
+MESSAGE("To install: sudo dpkg -i FileIO-<version>-Linux.deb")
+MESSAGE("To list files in install package: sudo dpkg --contents FileIO-<version>-Linux.deb")
+MESSAGE("To list installed files: sudo dpkg -L FileIO")
+MESSAGE("To remove: sudo dpkg -r FileIO")
+MESSAGE("To remove: sudo dpkg -r FileIO")
+
+#  NOTE: to change installation locations you can use the settings below
+#  examples:
+#  CPACK_INSTALL_PREFIX
+#  CMAKE_INSTALL_HEADERDIR
+#  CMAKE_INSTALL_LIBDIR
 INCLUDE(CPack)
+
