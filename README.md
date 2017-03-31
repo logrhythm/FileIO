@@ -39,7 +39,7 @@ make -j
 
 ### Executing the unit tests
 ```
-./UnitTestRunneer
+sudo ./UnitTestRunneer
 ```
 
 ### Installing
