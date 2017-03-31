@@ -633,14 +633,14 @@ TEST_F(TestFileIO, TestSudoFileReadAsciiFileContent) {
    ASSERT_NE(targetGID, 0);
 
    //Open a common root permissioned file without root permissions.
-   auto badResult = FileIO::ReadAsciiFileContent("/etc/sudoers");
+   auto badResult = FileIO::ReadAsciiFileContent("/etc/sysconfig/iptables-config");
    ASSERT_TRUE(badResult.HasFailed());
 
    //Open a common root permissioned file.
-   std::string filePath("/etc/sudoers");
+   std::string filePath("/etc/sysconfig/iptables-config");
    auto goodResult = FileIO::SudoFile(FileIO::ReadAsciiFileContent, filePath);
    EXPECT_FALSE(goodResult.HasFailed());
-   EXPECT_TRUE((goodResult.result.size() > 0));
+   EXPECT_TRUE(goodResult.result.size() > 0);
 
    FileIO::SetUserFileSystemAccess("root");
 }
