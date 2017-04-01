@@ -8,7 +8,7 @@
 
 cmake_minimum_required (VERSION 2.6)
 ENABLE_LANGUAGE(CXX)
-#set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Release)
 
 project (FileIO)
 set(PROJECT_SRC ${FileIO_SOURCE_DIR}/src)
@@ -41,7 +41,15 @@ SET(LIBRARY_TO_BUILD FileIO)
 
 
 SET(MAJOR_VERSION 1)
-IF (NOT DEFINED ${VERSION})
+
+# Find the current version if not already set
+# =============================================
+# workaround due to cmake 2.8 or otherwise where variables cannot 
+# easily be detected for existance
+# i.e the following does NOT work 
+# IF (NOT DEFINED ${VERSION})
+#
+IF (${VERSION}.x STREQUAL ".x")
    MESSAGE("Extracting git software version")
    execute_process(COMMAND bash "-c" "git rev-list --branches HEAD | wc -l | tr -d ' ' | tr -d '\n'" OUTPUT_VARIABLE GIT_VERSION)
    SET(MINOR_VERSION ${GIT_VERSION})
