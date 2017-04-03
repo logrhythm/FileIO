@@ -5,4 +5,3 @@
 #   file generated first, then filled back in appropriately.
 #
 sudo ./UnitTestRunner --gtest_filter=-*TestReadAsciiFileContentAsRoot
-./UnitTestRunner --gtest_filter=*TestReadAsciiFileContentAsRoot
