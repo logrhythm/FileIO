@@ -4,5 +4,6 @@
 #   Running tests as root is fine, but this particular test needs to have its .gcda
 #   file generated first, then filled back in appropriately.
 #
+set -x
 sudo ./UnitTestRunner --gtest_filter=-*TestReadAsciiFileContentAsRoot
-./UnitTestRunner --gtest_filter=*TestReadAsciiFileContentAsRoot
+sudo chown -R $USER:$USER .
