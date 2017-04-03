@@ -16,3 +16,39 @@ The file access code was written to avoid rewriting boiler plate code that is ea
 
 The **API** is accessible in the [[src]](https://github.com/LogRhythm/FileIO/tree/master/src) directory. Please read the header files together with [[test cases and example usage]](https://github.com/LogRhythm/FileIO/tree/master/test).
 
+## Test Suite Requirements
+1. [g3log](https://github.com/KjellKod/g3log)
+2. [g3sinks](https://github.com/KjellKod/g3sinks)
+3. [StopWatch](https://github.com/LogRhythm/StopWatch)
+4. [boost](http://www.boost.org/doc/libs/1_63_0/index.html) 
+For installing boost please follow their [instructions](http://www.boost.org/doc/libs/1_63_0/more/getting_started/unix-variants.html). 
+
+
+## Build and Install
+Example of installation
+```
+cd FileIO
+cd 3rdparty
+unzip gtest-1.7.0.zip
+cd ..
+mkdir build
+cd build
+cmake ..
+make -j
+```
+
+### Executing the unit tests
+```
+sudo ./UnitTestRunneer
+```
+
+### Installing
+```
+sudo make install
+```
+
+Alternative on Debian systems
+```
+make package
+sudo dpkg -i FileIO-<package_version>Linux.deb
+```

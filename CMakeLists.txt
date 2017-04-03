@@ -8,7 +8,7 @@
 
 cmake_minimum_required (VERSION 2.6)
 ENABLE_LANGUAGE(CXX)
-#set(CMAKE_BUILD_TYPE Release)
+set(CMAKE_BUILD_TYPE Release)
 
 project (FileIO)
 set(PROJECT_SRC ${FileIO_SOURCE_DIR}/src)
@@ -21,7 +21,6 @@ set(DIR_3RDPARTY ${FileIO_SOURCE_DIR}/3rdparty)
 MESSAGE(" PROJECT_SRC = : ${PROJECT_SRC}")
 include_directories(${PROJECT_SRC})
 SET(ACTIVE_CPP0xx_DIR "Release")
-find_library(TCMALLOC tcmalloc PATHS /usr/local/probe/lib )
 
 IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
    MESSAGE("")
@@ -29,11 +28,6 @@ IF ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
    SET(PLATFORM_LINK_LIBRIES rt)
    SET(CMAKE_CXX_FLAGS "-Wall -rdynamic -Wunused -std=c++14 -pthread -D_GLIBCXX_USE_NANOSLEEP")
 ENDIF()
-
-
-find_library(TCMALLOC tcmalloc PATHS /usr/local/probe/lib )
-
-
 
 
 
@@ -46,16 +40,31 @@ file(GLOB SRC_FILES ${PROJECT_SRC}/*.h ${PROJECT_SRC}/*.hpp ${PROJECT_SRC}/*.cpp
 SET(LIBRARY_TO_BUILD FileIO)
 
 
+SET(MAJOR_VERSION 1)
+
+# Find the current version if not already set
+# =============================================
+# workaround due to cmake 2.8 or otherwise where variables cannot 
+# easily be detected for existance
+# i.e the following does NOT work 
+# IF (NOT DEFINED ${VERSION})
+#
+IF (${VERSION}.x STREQUAL ".x")
+   MESSAGE("Extracting git software version")
+   execute_process(COMMAND bash "-c" "git rev-list --branches HEAD | wc -l | tr -d ' ' | tr -d '\n'" OUTPUT_VARIABLE GIT_VERSION)
+   SET(MINOR_VERSION ${GIT_VERSION})
+   SET(BUILD_NUMBER 0)
+   SET(VERSION ${MAJOR_VERSION}.${MINOR_VERSION}.${BUILD_NUMBER}) 
+ENDIF()
+MESSAGE("Software Version: ${VERSION}")
+
+
 
 # Create the  library
 include_directories(${PROJECT_SRC})
 add_library(${LIBRARY_TO_BUILD} SHARED  ${SRC_FILES})
 SET(FileIO_VERSION_STRING ${VERSION})
 SET_TARGET_PROPERTIES(${LIBRARY_TO_BUILD} PROPERTIES LINKER_LANGUAGE CXX SOVERSION ${VERSION})
-TARGET_LINK_LIBRARIES(${LIBRARY_TO_BUILD} ${TCMALLOC})
-
-
-
 
 
 # create the unit tests
@@ -69,14 +78,9 @@ set_target_properties(gtest_170_lib PROPERTIES COMPILE_DEFINITIONS "GTEST_HAS_RT
 enable_testing(true)
 
 
-find_library(TCMALLOC tcmalloc PATHS /usr/local/probe/lib )
-set(TEST_HELPER_LIBS ${TCMALLOC})
-
-find_library(BOOST_THREAD boost_thread PATHS /usr/local/probe/lib )
-list(APPEND TEST_HELPER_LIBS ${BOOST_THREAD})
 
 find_library(BOOST_FILESYSTEM boost_filesystem PATHS /usr/local/probe/lib )
-list(APPEND TEST_HELPER_LIBS ${BOOST_FILESYSTEM})
+set(TEST_HELPER_LIBS ${BOOST_FILESYSTEM})
 
 find_library(BOOST_SYSTEM boost_system PATHS /usr/local/probe/lib )
 list(APPEND TEST_HELPER_LIBS ${BOOST_SYSTEM})
@@ -100,3 +104,17 @@ add_executable(UnitTestRunner 3rdparty/test_main.cpp ${TEST_SRC_FILES} )
 target_link_libraries(UnitTestRunner ${LIBRARY_TO_BUILD} gtest_170_lib ${TEST_HELPER_LIBS})
 
 set_target_properties(${test} PROPERTIES COMPILE_FLAGS "-isystem -pthread ")
+
+
+
+IF(${CMAKE_SYSTEM_NAME} MATCHES "Linux" OR ${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+   FILE(GLOB HEADER_FILES ${PROJECT_SRC}/*.h)
+   # ==========================================================================
+   #   Package handling is done AFTER all other CMake setup
+   #   usage:   make package
+   #   Check the output result and install accordingly.
+   # ==========================================================================
+   INCLUDE (${PROJECT_SRC}/../CPackLists.txt)
+ENDIF()
+
+

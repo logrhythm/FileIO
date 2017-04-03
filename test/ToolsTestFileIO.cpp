@@ -633,11 +633,11 @@ TEST_F(TestFileIO, TestSudoFileReadAsciiFileContent) {
    ASSERT_NE(targetGID, 0);
 
    //Open a common root permissioned file without root permissions.
-   auto badResult = FileIO::ReadAsciiFileContent("/etc/sysconfig/iptables-config");
+   auto badResult = FileIO::ReadAsciiFileContent("/sys/module/drm/parameters/debug");
    ASSERT_TRUE(badResult.HasFailed());
 
    //Open a common root permissioned file.
-   std::string filePath("/etc/sysconfig/iptables-config");
+   std::string filePath("/sys/module/drm/parameters/debug");
    auto goodResult = FileIO::SudoFile(FileIO::ReadAsciiFileContent, filePath);
    EXPECT_FALSE(goodResult.HasFailed());
    EXPECT_TRUE(goodResult.result.size() > 0);
