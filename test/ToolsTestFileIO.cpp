@@ -633,11 +633,11 @@ TEST_F(TestFileIO, TestSudoFileReadAsciiFileContent) {
    ASSERT_NE(targetGID, 0);
 
    //Open a common root permissioned file without root permissions.
-   auto badResult = FileIO::ReadAsciiFileContent("/sys/module/drm/parameters/debug");
+   std::string filePath("/sys/module/hid/parameters/debug");
+   auto badResult = FileIO::ReadAsciiFileContent(filePath);
    ASSERT_TRUE(badResult.HasFailed());
 
    //Open a common root permissioned file.
-   std::string filePath("/sys/module/drm/parameters/debug");
    auto goodResult = FileIO::SudoFile(FileIO::ReadAsciiFileContent, filePath);
    EXPECT_FALSE(goodResult.HasFailed());
    EXPECT_TRUE(goodResult.result.size() > 0);
