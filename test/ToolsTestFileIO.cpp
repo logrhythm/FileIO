@@ -12,7 +12,6 @@
 #include <boost/filesystem.hpp>
 #include <future>
 #include <thread>
-#include <random>
 #include <sstream>
 #include <unistd.h>
 #include "ToolsTestFileIO.h"
@@ -112,9 +111,7 @@ TEST_F(TestFileIO, TestOfTestUtility) {
 TEST_F(TestFileIO, WriteThenReadBinaryFileContent__Convert_uint8_to_char_should_work_fine){
       using namespace std;
 
-   string filename{"/tmp/TestFileIO_"};
-   filename.append(to_string(random_int(0, 1000000)))
-     .append({"_"}).append(to_string(random_int(0, 1000000)));
+   string filename{mTestDirectory + "/TestFileIO"};
 
    // cleanup/removing the created file when exiting
    ScopedFileCleanup cleanup{filename};
@@ -166,10 +163,7 @@ TEST_F(TestFileIO, CannotWriteToFile) {
 TEST_F(TestFileIO, CanWriteToFileAndReadTheFile) {
    using namespace std;
 
-   string filename{"/tmp/TestFileIO_"};
-   filename.append(to_string(random_int(0, 1000000)))
-           .append({"_"})
-   .append(to_string(random_int(0, 1000000)));
+   std::string filename{mTestDirectory + "/TestFileIO"};
 
    // cleanup/removing the created file when exiting
    ScopedFileCleanup cleanup{filename};
@@ -246,7 +240,8 @@ TEST_F(TestFileIO, DirectoryIsNotEmpty) {
       std::string file = directory + "/fakefile.txt";
       FileIO::WriteAsciiFileContent(file, "");
       EXPECT_TRUE(FileIO::DoesDirectoryHaveContent(directory));
-      FileIO::RemoveFileAsRoot(file);
+      FileIO::SudoFile(FileIO::RemoveFile, file);
+      EXPECT_FALSE(FileIO::DoesDirectoryHaveContent(directory));
    }
 }
 
@@ -623,7 +618,7 @@ TEST_F(TestFileIO, CleanDirectoryOfFilesAndDirectories) {
 
 }
 
-TEST_F(TestFileIO, TestReadAsciiFileContentAsRoot) {
+TEST_F(TestFileIO, TestSudoFileReadAsciiFileContent) {
 
    int previousUID = setfsuid(-1);
    int previousGID = setfsgid(-1);
@@ -638,19 +633,49 @@ TEST_F(TestFileIO, TestReadAsciiFileContentAsRoot) {
    ASSERT_NE(targetGID, 0);
 
    //Open a common root permissioned file without root permissions.
-   auto badResult = FileIO::ReadAsciiFileContent("/etc/sysconfig/iptables-config");
+   std::string filePath("/sys/module/hid/parameters/debug");
+   auto badResult = FileIO::ReadAsciiFileContent(filePath);
    ASSERT_TRUE(badResult.HasFailed());
 
    //Open a common root permissioned file.
-   auto goodResult = FileIO::ReadAsciiFileContentAsRoot("/etc/sysconfig/iptables-config");
+   auto goodResult = FileIO::SudoFile(FileIO::ReadAsciiFileContent, filePath);
    EXPECT_FALSE(goodResult.HasFailed());
    EXPECT_TRUE(goodResult.result.size() > 0);
+
+   FileIO::SetUserFileSystemAccess("root");
 }
 
+TEST_F(TestFileIO, TestSudoFileRemoveFile) {
 
+   // Start as root user
+   int previousUID = setfsuid(-1);
+   int previousGID = setfsgid(-1);
+   ASSERT_EQ(previousUID, 0);
+   ASSERT_EQ(previousGID, 0);
 
+   std::string filename{mTestDirectory + "/TestFileIO"};
 
+   // Write file as user "root"
+   auto fileWrite = FileIO::WriteAsciiFileContent(filename,{"Hello World"});
+   EXPECT_TRUE(fileWrite.result);
 
+   FileIO::SetUserFileSystemAccess("nobody");
+   int targetUID = setfsuid(-1);
+   int targetGID = setfsgid(-1);
+   ASSERT_NE(targetUID, 0);
+   ASSERT_NE(targetGID, 0);
+
+   // Attempt to remove file as "nobody"
+   auto nobodyResult = FileIO::RemoveFile(filename);
+   EXPECT_FALSE(nobodyResult.result); // Fail to remove file as user nobody
+
+   // Now use SudoFile.
+   auto sudoFileResult = FileIO::SudoFile(FileIO::RemoveFile, filename);
+   EXPECT_TRUE(sudoFileResult.result); // Succeed using SudoFile
+   EXPECT_FALSE(FileIO::DoesFileExist(filename));
+
+   FileIO::SetUserFileSystemAccess("root");
+}
 
 TEST_F(TestFileIO, AThousandFiles) {
    using namespace FileIO;
