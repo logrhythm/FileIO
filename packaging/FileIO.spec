@@ -5,6 +5,7 @@ Summary:       An implemnetation of File IO for C++
 Group:         Development/Tools
 License:       MIT
 BuildRequires: probecmake >= 2.8
+Requires:      dpiUser
 ExclusiveArch: x86_64
 
 %description
