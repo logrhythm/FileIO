@@ -4,6 +4,7 @@ Release:       %{buildnumber}%{?dist}
 Summary:       An implemnetation of File IO for C++
 Group:         Development/Tools
 License:       MIT
+URL:           https://github.com/logrhythm/fileio
 BuildRequires: probecmake >= 2.8
 Requires:      dpiUser
 ExclusiveArch: x86_64
@@ -21,7 +22,7 @@ if [ $? -ne 0 ]; then
 fi
 
 %build
-# SKIP_BUILD_RPATH, CMAKE_SKIP_BUILD_RPATH, 
+# SKIP_BUILD_RPATH, CMAKE_SKIP_BUILD_RPATH,
 cd %{name}/
 PATH=/usr/local/gcc/bin:/usr/local/probe/bin:$PATH
 rm -f  CMakeCache.txt
