@@ -45,7 +45,7 @@ else
 fi
 
 make VERSION=1 -j6
-sudo ./UnitTestRunner
+./UnitTestRunner
 if [ "%{buildtype}" == "-DUSE_LR_DEBUG=ON"  ]; then
    /usr/local/probe/bin/CodeCoverage.py
 fi
