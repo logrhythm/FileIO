@@ -13,7 +13,7 @@ set(CMAKE_BUILD_TYPE Release)
 project (FileIO)
 set(PROJECT_SRC ${FileIO_SOURCE_DIR}/src)
 set(DIR_UNIT_TEST ${FileIO_SOURCE_DIR}/test)
-set(DIR_3RDPARTY ${FileIO_SOURCE_DIR}/3rdparty)
+set(DIR_3RDPARTY ${FileIO_SOURCE_DIR}/thirdparty)
 
 
 
@@ -100,7 +100,7 @@ include_directories(${PROJECT_SRC})
 file(GLOB TEST_SRC_FILES "test/*.cpp")
 
 SET(CMAKE_CXX_FLAGS "-Wall -Wno-sign-compare -rdynamic -Wunused -std=c++14 -pthread -D_GLIBCXX_USE_NANOSLEEP")
-add_executable(UnitTestRunner 3rdparty/test_main.cpp ${TEST_SRC_FILES} )
+add_executable(UnitTestRunner thirdparty/test_main.cpp ${TEST_SRC_FILES} )
 target_link_libraries(UnitTestRunner ${LIBRARY_TO_BUILD} gtest_170_lib ${TEST_HELPER_LIBS})
 
 set_target_properties(${test} PROPERTIES COMPILE_FLAGS "-isystem -pthread ")

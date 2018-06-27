@@ -26,7 +26,7 @@ fi
 cd %{name}/
 PATH=/usr/local/gcc/bin:/usr/local/probe/bin:$PATH
 rm -f  CMakeCache.txt
-cd 3rdparty
+cd thirdparty
 unzip -u gtest-1.7.0.zip
 cd ..
 
