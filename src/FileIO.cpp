@@ -113,7 +113,13 @@ namespace FileIO {
       // Attempt to read it the fastest way possible.
       if (-1 != end) {  // tellg() --> pos_type{-1} if reading the end failed.
          contents.resize(end);
-         in.read(&contents[0], contents.size());
+         try {
+            in.read(&contents[0], contents.size());
+         } catch (std::iostream::failure& e) {
+            std::string error{"Failed to read file: "};
+            error += e.what();
+            return Result<std::vector<uint8_t>>{{}, error};
+         }
       } else {
          // Could not calculate with ifstream::tellg(). Is it a RAM file?
          // Fallback solution to slower iteratator approach
