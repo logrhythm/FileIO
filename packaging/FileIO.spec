@@ -5,7 +5,7 @@ Summary:       An implemnetation of File IO for C++
 Group:         Development/Tools
 License:       MIT
 URL:           https://github.com/logrhythm/fileio
-BuildRequires: probecmake >= 2.8
+BuildRequires: cmake >= 2.8
 Requires:      dpiUser
 ExclusiveArch: x86_64
 
@@ -32,11 +32,11 @@ cd ..
 
 
 if [ "%{buildtype}" == "-DUSE_LR_DEBUG=OFF"  ]; then
-   /usr/local/probe/bin/cmake -DVERSION:STRING=%{version} \
+   cmake -DVERSION:STRING=%{version} \
       -DCMAKE_CXX_COMPILER_ARG1:STRING=' -std=c++14 -Wall -fPIC -Ofast -m64 -isystem/usr/local/gcc/include -isystem/usr/local/probe/include -Wl,-rpath -Wl,. -Wl,-rpath -Wl,/usr/local/probe/lib -Wl,-rpath -Wl,/usr/local/gcc/lib64 ' \
       -DCMAKE_BUILD_TYPE:STRING=Release -DBUILD_SHARED_LIBS:BOOL=ON -DCMAKE_CXX_COMPILER=/usr/local/gcc/bin/g++
 elif [ "%{buildtype}" == "-DUSE_LR_DEBUG=ON"  ]; then
-   /usr/local/probe/bin/cmake -DUSE_LR_DEBUG=ON -DVERSION:STRING=%{version} \
+   cmake -DUSE_LR_DEBUG=ON -DVERSION:STRING=%{version} \
       -DCMAKE_CXX_COMPILER_ARG1:STRING=' -std=c++14 -Wall -Werror -g -gdwarf-2 --coverage -O0 -fPIC -m64 -isystem/usr/local/gcc/include -isystem/usr/local/probe/include -Wl,-rpath -Wl,. -Wl,-rpath -Wl,/usr/local/probe/lib -Wl,-rpath -Wl,/usr/local/gcc/lib64 ' \
       -DCMAKE_CXX_COMPILER=/usr/local/gcc/bin/g++
 else
