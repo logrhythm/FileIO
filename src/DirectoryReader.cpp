@@ -63,21 +63,21 @@ DirectoryReader::Entry DirectoryReader::Next() {
    Entry entry = std::make_pair(FileType::Unknown, "");
    bool found = false;
    while (!found && (entry.first != FileType::End)) {
-      readdir64_r(mDirectory, &mEntry, &mResult); // readdir_r is reentrant
+      mResult = readdir64(mDirectory);
 
       found = true; // abort immediately unless we hit "." or ".."
 
       if (nullptr == mResult) {
          entry = std::make_pair(FileType::End, "");
-      } else if (static_cast<unsigned char> (FileType::Directory) == mEntry.d_type) {
-         std::string name{mEntry.d_name};
+      } else if (static_cast<unsigned char> (FileType::Directory) == mResult->d_type) {
+         std::string name{mResult->d_name};
          if ((Ignore1 == name) || (Ignore2 == name)) {
             found = false;
          } else {
             entry = std::make_pair(FileType::Directory, std::move(name));
          }
-      } else if (static_cast<unsigned char> (FileType::File) == mEntry.d_type) {
-         entry = std::make_pair(FileType::File, mEntry.d_name);
+      } else if (static_cast<unsigned char> (FileType::File) == mResult->d_type) {
+         entry = std::make_pair(FileType::File, mResult->d_name);
       } else {
          // Default case. Unless continue was called it will always exit here
          entry = std::make_pair(FileType::Unknown, "");
